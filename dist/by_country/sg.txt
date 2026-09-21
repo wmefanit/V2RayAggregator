@@ -1,23 +1,18 @@
-ss://498de120-ed30-4f7e-b498-da4917465793@172.234.236.56:443?mode=stream-one&amp;path=%2F&amp;security=none&amp;encryption=none&amp;type=xhttp# By EbraSha 🧲
-vless://7ab29f89-6eef-4171-b232-fc4f580ad31b@172.235.43.210:53957?security=reality&encryption=none&pbk=XUHlbk5VH5z4E2wxZBhlpLZ33qevyQgqU7dheRDgoGQ&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=www.nvidia.com&sid=44e82fd7b97b14#🇺🇸[openproxylist.com] vless-US
 ss://54c6740f-76f0-4152-a06c-71fb77a7ae2c@45.33.115.7:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 📶
+vless://7ab29f89-6eef-4171-b232-fc4f580ad31b@172.235.43.210:53957?security=reality&encryption=none&pbk=XUHlbk5VH5z4E2wxZBhlpLZ33qevyQgqU7dheRDgoGQ&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=www.nvidia.com&sid=44e82fd7b97b14#🇺🇸[openproxylist.com] vless-US
+ss://498de120-ed30-4f7e-b498-da4917465793@172.234.236.56:443?mode=stream-one&amp;path=%2F&amp;security=none&amp;encryption=none&amp;type=xhttp# By EbraSha 🧲
+http://172.237.11.129:3128
 ss://YWVzLTI1Ni1nY206M2VPRmVOc3NkZTdQWVlNdg%3D%3D@84.247.155.196:80#@v2rayng3
 ss://YWVzLTI1Ni1nY206M2VPRmVOc3NkZTdQWVlNdg%3D%3D@84.247.155.196:80#Telegram:@v2rayng3
 http://139.162.78.109:3128
-ss://2022-blake3-aes-256-gcm:WAqeGA%2BdU%2BHZYSipCio%2BJmt7SSVfHjwMH7j8xmsm7%2Fs%3D%3AalthddZ27iu261I%2B568pk7HZzBFDCyIx6pvG8H9oXow%3D@web.turbooserver.net.tr:2087# By EbraSha ♦️
-ss://MjAyMi1ibGFrZTMtYWVzLTI1Ni1nY206V0FxZUdBK2RVK0haWVNpcENpbytKbXQ3U1NWZkhqd01IN2o4eG1zbTcvcz06YWx0aGRkWjI3aXUyNjFJKzU2OHBrN0haekJGREN5SXg2cHZHOEg5b1hvdz0@web.turbooserver.net.tr:2087#%40FreeLand8%F0%9F%94%A5
-ss://MjAyMi1ibGFrZTMtYWVzLTI1Ni1nY206V0FxZUdBK2RVK0haWVNpcENpbytKbXQ3U1NWZkhqd01IN2o4eG1zbTcvcz06YWx0aGRkWjI3aXUyNjFJKzU2OHBrN0haekJGREN5SXg2cHZHOEg5b1hvdz0=@web.turbooserver.net.tr:2087# By EbraSha 👑
-ss://MjAyMi1ibGFrZTMtYWVzLTI1Ni1nY206V0FxZUdBK2RVK0haWVNpcENpbytKbXQ3U1NWZkhqd01IN2o4eG1zbTcvcz06YWx0aGRkWjI3aXUyNjFJKzU2OHBrN0haekJGREN5SXg2cHZHOEg5b1hvdz0@web.turbooserver.net.tr:2087# By EbraSha 🧠
-ss://2022-blake3-aes-256-gcm:WAqeGA+dU+HZYSipCio+Jmt7SSVfHjwMH7j8xmsm7/s=:althddZ27iu261I+568pk7HZzBFDCyIx6pvG8H9oXow=@web.turbooserver.net.tr:2087# By EbraSha 🌑
-ss://MjAyMi1ibGFrZTMtYWVzLTI1Ni1nY206V0FxZUdBK2RVK0haWVNpcENpbytKbXQ3U1NWZkhqd01IN2o4eG1zbTcvcz06YWx0aGRkWjI3aXUyNjFJKzU2OHBrN0haekJGREN5SXg2cHZHOEg5b1hvdz0@web.turbooserver.net.tr:2087#%40FreeLand8%20%F0%9F%87%AA%F0%9F%87%BA
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpZVVdYNkNPTFpZbWFIbFVHaUt3RGFO@45.79.238.129:443# By EbraSha 📼
-http://143.42.66.91:80
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpYVjRidmFKSVdveGwzSVlFQzFlNlc3@194.233.74.160:2342# By EbraSha 🖥️
-vless://cb15cce9-73ed-4928-b38c-462f0732cbe9@217.217.254.126:2053?encryption=none&type=tcp&security=reality&pbk=VzRjuHwcY-nLqkEIJS4S1CpButKc90Bh0gDbphyZ0Tw&sid=87829de0e2bb82cb&sni=www.cloudflare.com&fp=firefox&allowInsecure=1#🇸🇬[openproxylist.com] vless-SG
-ss://Y2hhY2hhMjAtaWV0Zjphc2QxMjM0NTY=@103.36.91.32:8388# By EbraSha 📟
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpYVjRidmFKSVdveGwzSVlFQzFlNlc3@194.233.74.160:2342#🇸🇬[openproxylist.com] ss-SG
 vless://00f8cbcc-bf10-418b-a842-35519f460c7f@www.hxino.com:443?path=%2F38284%2Fapi4&amp;security=tls&amp;encryption=mlkem768x25519plus.random.0rtt.bt6vamtdf4jPeuNn2b5eHC7VwnJ4KklEReD_AIAkfT0&amp;insecure=0&amp;host=deh.irandoc.info&amp;fp=firefox&amp;type=httpupgrade&amp;allowInsecure=0#Free%20x217%20%40Outline_Vpn
 ss://00f8cbcc-bf10-418b-a842-35519f460c7f@www.hxino.com:443?path=%2F38284%2Fapi4&amp;security=tls&amp;encryption=mlkem768x25519plus.random.0rtt.bt6vamtdf4jPeuNn2b5eHC7VwnJ4KklEReD_AIAkfT0&amp;insecure=0&amp;host=deh.irandoc.info&amp;fp=firefox&amp;type=httpupgrade&amp;allowInsecure=0#Free%20x217%20%40Outline_Vpn
-ss://00f8cbcc-bf10-418b-a842-35519f460c7f@www.hxino.com:443?path=%2F38284%2Fapi4&security=tls&encryption=mlkem768x25519plus.random.0rtt.bt6vamtdf4jPeuNn2b5eHC7VwnJ4KklEReD_AIAkfT0&insecure=0&host=deh.irandoc.info&fp=firefox&type=httpupgrade&allowInsecure=0# By EbraSha 🤖
+http://143.42.66.91:80
 ss://00f8cbcc-bf10-418b-a842-35519f460c7f@www.hxino.com:443?path=%2F38284%2Fapi4&amp;security=tls&amp;encryption=mlkem768x25519plus.random.0rtt.bt6vamtdf4jPeuNn2b5eHC7VwnJ4KklEReD_AIAkfT0&amp;insecure=0&amp;host=deh.irandoc.info&amp;fp=firefox&amp;type=httpupgrade&amp;allowInsecure=0# By EbraSha 🛸
+ss://00f8cbcc-bf10-418b-a842-35519f460c7f@www.hxino.com:443?path=%2F38284%2Fapi4&security=tls&encryption=mlkem768x25519plus.random.0rtt.bt6vamtdf4jPeuNn2b5eHC7VwnJ4KklEReD_AIAkfT0&insecure=0&host=deh.irandoc.info&fp=firefox&type=httpupgrade&allowInsecure=0# By EbraSha 🤖
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpYVjRidmFKSVdveGwzSVlFQzFlNlc3@194.233.74.160:2342# By EbraSha 🖥️
+vless://cb15cce9-73ed-4928-b38c-462f0732cbe9@217.217.254.126:2053?encryption=none&type=tcp&security=reality&pbk=VzRjuHwcY-nLqkEIJS4S1CpButKc90Bh0gDbphyZ0Tw&sid=87829de0e2bb82cb&sni=www.cloudflare.com&fp=firefox&allowInsecure=1#🇸🇬[openproxylist.com] vless-SG
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpYVjRidmFKSVdveGwzSVlFQzFlNlc3@194.233.74.160:2342#🇸🇬[openproxylist.com] ss-SG
+ss://Y2hhY2hhMjAtaWV0Zjphc2QxMjM0NTY=@103.36.91.32:8388# By EbraSha 📟
 http://45.79.203.254:48388

@@ -1,135 +1,134 @@
 socks5://147.189.169.226:9050
-http://5.161.50.82:8118
-http://209.50.169.13:3129
 http://65.111.20.0:3129
+http://209.50.169.13:3129
 http://216.26.232.182:3129
+ss://d4cae7df-50a1-428c-bd62-881c8f3bbd90@nl.superbuba.top:443?security=reality&amp;encryption=none&amp;pbk=z37XIezsPyfMgmdXyFd9qT4C4maDAs1OcRt-wfyrXVo&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=nl.superbuba.top&amp;sid=9c2378562188c3cb#%F0%9F%87%B3%F0%9F%87%B1198Mb%20%7C%20%40ELiV2Ray
 ss://13201185-edb3-40ed-a92d-ded4c2514854@ak2.vpnfreedom.tech:443?security=reality&amp;encryption=none&amp;pbk=l0saUZNgojrR6PjhL_fMHEBZlZ2TJypjRdQyy2mrFFI&amp;headerType=none&amp;fp=firefox&amp;spx=%2F&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=google.com&amp;sid=58# By EbraSha 👾
 socks5://89.163.135.20:8236
-ss://d4cae7df-50a1-428c-bd62-881c8f3bbd90@nl.superbuba.top:443?security=reality&amp;encryption=none&amp;pbk=z37XIezsPyfMgmdXyFd9qT4C4maDAs1OcRt-wfyrXVo&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=nl.superbuba.top&amp;sid=9c2378562188c3cb#%F0%9F%87%B3%F0%9F%87%B1198Mb%20%7C%20%40ELiV2Ray
-ss://784646e5-8e84-4672-8670-efc9cafcd2cc@212.95.34.5:443/?type=ws&amp;encryption=none&amp;flow=&amp;path=%2F&amp;security=tls&amp;allowInsecure=1# By EbraSha 🕷️
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpJWGEzeWx6U19qQk9Bc1F5MDcxdElR@94.249.187.46:1080# By EbraSha 🛸
-socks5://38.242.158.117:9050
+socks5://95.111.228.190:1081
 http://167.86.104.220:80
-http://185.218.125.70:80
+http://157.173.115.35:1081
+ss://83a85a41-fb7f-43e0-9c15-d199509a9624@178.162.244.224:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 🛡️
+http://207.180.254.198:8080
+http://109.199.119.160:80
+ss://d342d11e-d424-4583-b36e-524ab1f0afa4@157.173.125.214:2087?path=%252Fredirect%252Fchina%252Fview%253Fed%253D2560&amp;security=tls&amp;encryption=none&amp;insecure=0&amp;host=cdn8848.776676.xyz&amp;fp=chrome&amp;type=ws&amp;allowInsecure=0&amp;sni=cdn8848.776676.xyz#Free%20x400%20%40Outline_Vpn
+http://161.97.94.168:6001
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo5NGR2b1cwVGRLUnE=@161.97.68.139:443# By EbraSha 🎛️
-http://152.53.183.107:8082
-http://159.195.194.242:8080
-socks5://5.75.133.113:10814
-socks5://95.111.228.190:1080
-http://46.224.153.114:9050
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpJWGEzeWx6U19qQk9Bc1F5MDcxdElR@5.75.192.44:1080# By EbraSha 🧲
-socks5://5.75.133.113:10803
-ss://1c3b5f09-d3f4-44cc-adfc-5d74a71d33f2@91.107.240.177:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp# By EbraSha 🔥
-http://141.98.153.86:80
+http://185.218.125.70:80
+socks5://144.91.83.56:9050
 ss://8db764be-f144-4df0-ae5d-21d5f2551290@md.gilangard.ir:11431?security=reality&amp;encryption=none&amp;pbk=-mmOMxUx52Rj14VuE5fhlsvh7qt5WT9WEZy5LQlnSDc&amp;headerType=none&amp;fp=qq&amp;type=tcp&amp;sni=play.google.com&amp;sid=d8de8785395c206b# By EbraSha 🌪️
+http://213.199.48.89:80
+ss://1c3b5f09-d3f4-44cc-adfc-5d74a71d33f2@91.107.240.177:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#%DA%A9%D8%A7%D9%86%D8%A7%D9%84+%3A+%40V2rayNGvpni
+ss://784646e5-8e84-4672-8670-efc9cafcd2cc@212.95.34.5:443/?type=ws&amp;encryption=none&amp;flow=&amp;path=%2F&amp;security=tls&amp;allowInsecure=1# By EbraSha 🕷️
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpFNGd5SGtLd0pHeUc=@161.97.66.81:443# By EbraSha 🕹️
+vless://d4cae7df-50a1-428c-bd62-881c8f3bbd90@nl.superbuba.top:443?security=reality&amp;encryption=none&amp;pbk=z37XIezsPyfMgmdXyFd9qT4C4maDAs1OcRt-wfyrXVo&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=nl.superbuba.top&amp;sid=9c2378562188c3cb#%F0%9F%87%B3%F0%9F%87%B1198Mb%20%7C%20%40ELiV2Ray
+vless://3a5a2bfd-97d5-4a35-bd9f-abb117b79f40@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718#Free%20x264%20%40Outline_Vpn
+vless://d342d11e-d424-4583-b36e-524ab1f0afa4@157.173.125.214:2087?path=%252Fredirect%252Fchina%252Fview%253Fed%253D2560&amp;security=tls&amp;encryption=none&amp;insecure=0&amp;host=cdn8848.776676.xyz&amp;fp=chrome&amp;type=ws&amp;allowInsecure=0&amp;sni=cdn8848.776676.xyz#Free%20x400%20%40Outline_Vpn
+http://45.3.43.30:3129
+socks5://95.111.228.190:1080
+ss://MjAyMi1ibGFrZTMtYWVzLTI1Ni1nY206cFo0K1p1c2FnaG9rc0NVUjc1TDJUVlEwekZQdWdXd2dwdURweVh6eG1jYz06VC9BVXMvcHdNM0FkcXdYbG4wclAwWWlKdDdlcU0rZ0huVUFsVUpsUWFEQT0=@188.34.194.165:80# By EbraSha 🔮
+trojan://humanity@88.198.82.150:443?path=%2Fassignment&amp;security=tls&amp;insecure=0&amp;fp=chrome&amp;type=ws&amp;allowInsecure=0&amp;sni=www.ignitelimit.com#%40FreeLand8%F0%9F%94%A5
+socks5://91.107.179.68:10809
+http://82.165.184.53:80
+ss://153ee04c-dcc1-4ef8-a146-8fb31cec1f48@91.99.192.185:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 🛡️
+ss://564397f8-4805-4433-ab5b-a24aa133bac2@104.167.24.21:443?encryption=none&security=reality&sni=hub.oneoknews.com&fp=firefox&pbk=KJoHsAShwQt-FYE2OGEekwDbeeYe-S1A0YBU8W5uYGc&sid=064c2d37308aeeb6&allowinsecure=0&type=grpc&mode=gun&authority=&serviceName=api.v1.StreamService# By EbraSha ♦️
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpHdnNqUTBPWjVuR1FYREdmemZXWmY1@212.227.146.33:443# By EbraSha 🔌
+socks5://5.75.133.113:10803
+vless://8db764be-f144-4df0-ae5d-21d5f2551290@md.gilangard.ir:11431?security=reality&amp;encryption=none&amp;pbk=-mmOMxUx52Rj14VuE5fhlsvh7qt5WT9WEZy5LQlnSDc&amp;headerType=none&amp;fp=qq&amp;type=tcp&amp;sni=play.google.com&amp;sid=d8de8785395c206b#@V2rayng3
+ss://3c37d31e-9990-4c52-80fa-d971564d58c1@49.12.237.71:443?path=%2F%3Fu%3D73742dbc12&security=tls&encryption=none&insecure=0&host=nova-atlas-core-609c.nova-c40b57.workers.dev&fp=chrome&type=ws&allowInsecure=0&sni=nova-atlas-core-609c.nova-c40b57.workers.dev# By EbraSha 🚧
+http://116.203.27.109:80
 ss://8db764be-f144-4df0-ae5d-21d5f2551290@md.gilangard.ir:11431?security=reality&amp;encryption=none&amp;pbk=-mmOMxUx52Rj14VuE5fhlsvh7qt5WT9WEZy5LQlnSDc&amp;headerType=none&amp;fp=qq&amp;type=tcp&amp;sni=play.google.com&amp;sid=d8de8785395c206b#@V2rayng3
-socks5://89.213.118.234:9050
-socks5://49.13.22.249:10802
-socks5://152.53.183.107:8081
-socks5://49.13.22.249:10805
-socks5://49.13.22.249:10806
+ss://9ffcb940-cbf9-43ef-a077-20e26b2bde8c@ger.motorbazan.com:2087?security=none&encryption=none&host=play.google.com%2F%3FBIA_TELEGRAM%40MARAMBASHI_MARAMBASHI_MARAMBASHI_MARAMBASHI&headerType=http&type=tcp# By EbraSha 🧿
+socks5://138.199.222.72:9050
+http://157.90.113.23:9052
+http://46.224.153.114:9050
+socks5://168.119.173.104:47486
+http://178.104.243.218:7000
+vless://9f44d517-29f2-4c6d-cc06-a1268f13da58@host.taghvimtime.ir:8443?mode=auto&amp;path=%2FMeh%3Fdi%3D443&amp;security=tls&amp;alpn=h2&amp;encryption=none&amp;extra=%7B%22scMaxBufferedPosts%22%3A30%2C%22scMaxEachPostBytes%22%3A%221000000%22%2C%22scStreamUpServerSecs%22%3A%2220-80%22%2C%22xPaddingBytes%22%3A%22100-1000%22%2C%22scMinPostsIntervalMs%22%3A%2230%22%2C%22xmux%22%3A%7B%22maxConcurrency%22%3A%2216-32%22%2C%22maxConnections%22%3A0%2C%22cMaxReuseTimes%22%3A0%2C%22hMaxRequestTimes%22%3A%22600-900%22%2C%22hMaxReusableSecs%22%3A%221800-3000%22%2C%22hKeepAlivePeriod%22%3A0%7D%7D&amp;insecure=0&amp;host=host.taghvimtime.ir&amp;fp=chrome&amp;type=xhttp&amp;allowInsecure=0&amp;sni=host.taghvimtime.ir#%40FreeLand8%F0%9F%94%A5
+ss://0f7e89d6-9f35-4e94-ba4b-509a724dc177@91.99.233.77:443?mode=auto&amp;path=%2Fds&amp;security=none&amp;encryption=none&amp;type=xhttp# By EbraSha 🦈
+ss://1c3b5f09-d3f4-44cc-adfc-5d74a71d33f2@91.107.240.177:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp# By EbraSha 🔥
+socks5://5.75.133.113:10805
 socks5://178.104.243.218:7017
 http://128.140.113.110:8081
-ss://1c3b5f09-d3f4-44cc-adfc-5d74a71d33f2@91.107.240.177:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#%DA%A9%D8%A7%D9%86%D8%A7%D9%84+%3A+%40V2rayNGvpni
-socks5://92.204.54.29:9100
-ss://69d8dc73-20ff-4241-bdd8-a9d6d07553b6@91.107.179.8:15003?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#Free%20x234%20%40Outline_Vpn
-http://45.3.43.30:3129
-ss://d512bf3d-3d5f-433e-b51f-dfb321720a6d@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718#Free%20x325%20%40Outline_Vpn
-ss://9ffcb940-cbf9-43ef-a077-20e26b2bde8c@ger.motorbazan.com:2087?security=none&encryption=none&host=play.google.com%2F%3FBIA_TELEGRAM%40MARAMBASHI_MARAMBASHI_MARAMBASHI_MARAMBASHI&headerType=http&type=tcp# By EbraSha 🧿
-http://157.90.10.50:80
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpFNGd5SGtLd0pHeUc=@161.97.66.81:443# By EbraSha 🕹️
-socks5://168.119.173.104:47486
-socks5://5.189.160.163:9100
-socks5://5.75.133.113:10809
-vless://CONFIG-WANCLOUDFA@49.12.64.220:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#%DA%A9%D8%A7%D9%86%D8%A7%D9%84+%3A+%40V2rayNGvpni
-ss://0f7e89d6-9f35-4e94-ba4b-509a724dc177@91.99.233.77:443?mode=auto&amp;path=%2Fds&amp;security=none&amp;encryption=none&amp;type=xhttp# By EbraSha 🦈
-socks5://49.13.22.249:10803
-vless://69d8dc73-20ff-4241-bdd8-a9d6d07553b6@91.107.179.8:15003?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#Free%20x234%20%40Outline_Vpn
-vless://3a5a2bfd-97d5-4a35-bd9f-abb117b79f40@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718#Free%20x264%20%40Outline_Vpn
-socks5://109.123.249.138:10808
-ss://69d8dc73-20ff-4241-bdd8-a9d6d07553b6@91.107.179.8:15003?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp# By EbraSha 🧊
+socks5://91.107.188.12:9080
 ss://CONFIG-WANCLOUDFA@49.12.64.220:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#%DA%A9%D8%A7%D9%86%D8%A7%D9%84+%3A+%40V2rayNGvpni
-http://91.107.188.12:9087
-socks5://185.133.239.244:16299
-ss://9f44d517-29f2-4c6d-cc06-a1268f13da58@host.taghvimtime.ir:8443?mode=auto&amp;path=%2FMeh%3Fdi%3D443&amp;security=tls&amp;alpn=h2&amp;encryption=none&amp;extra=%7B%22scMaxBufferedPosts%22%3A30%2C%22scMaxEachPostBytes%22%3A%221000000%22%2C%22scStreamUpServerSecs%22%3A%2220-80%22%2C%22xPaddingBytes%22%3A%22100-1000%22%2C%22scMinPostsIntervalMs%22%3A%2230%22%2C%22xmux%22%3A%7B%22maxConcurrency%22%3A%2216-32%22%2C%22maxConnections%22%3A0%2C%22cMaxReuseTimes%22%3A0%2C%22hMaxRequestTimes%22%3A%22600-900%22%2C%22hMaxReusableSecs%22%3A%221800-3000%22%2C%22hKeepAlivePeriod%22%3A0%7D%7D&amp;insecure=0&amp;host=host.taghvimtime.ir&amp;fp=chrome&amp;type=xhttp&amp;allowInsecure=0&amp;sni=host.taghvimtime.ir# By EbraSha 📼
-http://213.199.48.89:80
-socks5://169.58.97.115:1080
-trojan://humanity@88.198.82.150:443?path=%2Fassignment&amp;security=tls&amp;insecure=0&amp;fp=chrome&amp;type=ws&amp;allowInsecure=0&amp;sni=www.ignitelimit.com#%40FreeLand8%20%F0%9F%87%AA%F0%9F%87%BA
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprZ19ubklCX1RmYXM2Y1VES0R5eWpxZmMzN08wOHczXw@91.107.178.93:22383# By EbraSha 🕷️
-vless://d342d11e-d424-4583-b36e-524ab1f0afa4@157.173.125.214:2087?path=%252Fredirect%252Fchina%252Fview%253Fed%253D2560&amp;security=tls&amp;encryption=none&amp;insecure=0&amp;host=cdn8848.776676.xyz&amp;fp=chrome&amp;type=ws&amp;allowInsecure=0&amp;sni=cdn8848.776676.xyz#Free%20x400%20%40Outline_Vpn
-http://109.199.119.160:80
-ss://564397f8-4805-4433-ab5b-a24aa133bac2@104.167.24.21:443?encryption=none&security=reality&sni=hub.oneoknews.com&fp=firefox&pbk=KJoHsAShwQt-FYE2OGEekwDbeeYe-S1A0YBU8W5uYGc&sid=064c2d37308aeeb6&allowinsecure=0&type=grpc&mode=gun&authority=&serviceName=api.v1.StreamService# By EbraSha ♦️
-ss://83a85a41-fb7f-43e0-9c15-d199509a9624@178.162.244.224:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 🛡️
-trojan://humanity@88.198.82.150:443?path=%2Fassignment&amp;security=tls&amp;insecure=0&amp;fp=chrome&amp;type=ws&amp;allowInsecure=0&amp;sni=www.ignitelimit.com#%40FreeLand8%F0%9F%94%A5
-vless://d4cae7df-50a1-428c-bd62-881c8f3bbd90@nl.superbuba.top:443?security=reality&amp;encryption=none&amp;pbk=z37XIezsPyfMgmdXyFd9qT4C4maDAs1OcRt-wfyrXVo&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=nl.superbuba.top&amp;sid=9c2378562188c3cb#%F0%9F%87%B3%F0%9F%87%B1198Mb%20%7C%20%40ELiV2Ray
-http://178.104.243.218:7000
-socks5://5.75.133.113:10805
+ss://9f44d517-29f2-4c6d-cc06-a1268f13da58@host.taghvimtime.ir:8443?mode=auto&amp;path=%2FMeh%3Fdi%3D443&amp;security=tls&amp;alpn=h2&amp;encryption=none&amp;extra=%7B%22scMaxBufferedPosts%22%3A30%2C%22scMaxEachPostBytes%22%3A%221000000%22%2C%22scStreamUpServerSecs%22%3A%2220-80%22%2C%22xPaddingBytes%22%3A%22100-1000%22%2C%22scMinPostsIntervalMs%22%3A%2230%22%2C%22xmux%22%3A%7B%22maxConcurrency%22%3A%2216-32%22%2C%22maxConnections%22%3A0%2C%22cMaxReuseTimes%22%3A0%2C%22hMaxRequestTimes%22%3A%22600-900%22%2C%22hMaxReusableSecs%22%3A%221800-3000%22%2C%22hKeepAlivePeriod%22%3A0%7D%7D&amp;insecure=0&amp;host=host.taghvimtime.ir&amp;fp=chrome&amp;type=xhttp&amp;allowInsecure=0&amp;sni=host.taghvimtime.ir#%40FreeLand8%F0%9F%94%A5
+socks5://92.204.54.29:9100
+ss://3a5a2bfd-97d5-4a35-bd9f-abb117b79f40@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718#Free%20x264%20%40Outline_Vpn
+http://141.98.153.86:80
 trojan://BbNnpOgc1j9WOaWoslbSyeob1r47IRHV@jgzt1997.qivfelo.ir:1080?security=reality&amp;pbk=1ZO9Cjhs1IFAU6nZATRhOuD3kq6J-1dZadfEfX734zc&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=maps.google.com&amp;sid=0d12eb289946de9b#Free%20x226%20%40Outline_Vpn
 trojan://BbNnpOgc1j9WOaWoslbSyeob1r47IRHV@5.75.171.12:1080?security=reality&amp;pbk=1ZO9Cjhs1IFAU6nZATRhOuD3kq6J-1dZadfEfX734zc&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=maps.google.com&amp;sid=0d12eb289946de9b#Free%20x271%20%40Outline_Vpnx269
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo3cEdnLW1aenBvS1JONVRZUGc4STJR@cdn-2d12.giftcardbazarbot.com:8243# By EbraSha 🥷
-http://152.53.183.107:8081
-socks5://212.227.186.120:5678
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTplcHQyVjZ5YXJXemF6WlN0TXUwQ3FNLWp4M05OMndHMA@jgzt1997.qivfelo.ir:5052# By EbraSha 🪐
-ss://3a5a2bfd-97d5-4a35-bd9f-abb117b79f40@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718# By EbraSha 🌀
-ss://3c37d31e-9990-4c52-80fa-d971564d58c1@49.12.237.71:443?path=%2F%3Fu%3D73742dbc12&security=tls&encryption=none&insecure=0&host=nova-atlas-core-609c.nova-c40b57.workers.dev&fp=chrome&type=ws&allowInsecure=0&sni=nova-atlas-core-609c.nova-c40b57.workers.dev# By EbraSha 🚧
-http://116.203.27.109:80
-ss://9f44d517-29f2-4c6d-cc06-a1268f13da58@host.taghvimtime.ir:8443?mode=auto&amp;path=%2FMeh%3Fdi%3D443&amp;security=tls&amp;alpn=h2&amp;encryption=none&amp;extra=%7B%22scMaxBufferedPosts%22%3A30%2C%22scMaxEachPostBytes%22%3A%221000000%22%2C%22scStreamUpServerSecs%22%3A%2220-80%22%2C%22xPaddingBytes%22%3A%22100-1000%22%2C%22scMinPostsIntervalMs%22%3A%2230%22%2C%22xmux%22%3A%7B%22maxConcurrency%22%3A%2216-32%22%2C%22maxConnections%22%3A0%2C%22cMaxReuseTimes%22%3A0%2C%22hMaxRequestTimes%22%3A%22600-900%22%2C%22hMaxReusableSecs%22%3A%221800-3000%22%2C%22hKeepAlivePeriod%22%3A0%7D%7D&amp;insecure=0&amp;host=host.taghvimtime.ir&amp;fp=chrome&amp;type=xhttp&amp;allowInsecure=0&amp;sni=host.taghvimtime.ir#%40FreeLand8%F0%9F%94%A5
-ss://3a5a2bfd-97d5-4a35-bd9f-abb117b79f40@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718#Free%20x264%20%40Outline_Vpn
-ss://88b9da00-7a25-45ec-859b-14ad57a6bd2b@91.99.179.203:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 🚀
-ss://MjAyMi1ibGFrZTMtYWVzLTEyOC1nY206MUp2bG10VDR2OHkxeUdjekR0VDZXdz09OmFDdHBlTWlldEdzSlk1MGg2akRXNnc9PQ@dopr.rehan-iogsar.ir:4680# By EbraSha 🦂
-socks5://138.199.222.72:9050
 ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0cHVXdkFRdGpkLU12dms4MWw3T0xn@cdn-2d12.giftcardbazarbot.com:8243# By EbraSha 🌐
-http://212.227.186.120:5678
-socks5://49.13.22.249:10812
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpHdnNqUTBPWjVuR1FYREdmemZXWmY1@212.227.146.33:443# By EbraSha 🔌
-http://91.107.188.12:9088
-vless://d512bf3d-3d5f-433e-b51f-dfb321720a6d@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718#Free%20x325%20%40Outline_Vpn
-http://82.165.184.53:80
-socks5://91.107.188.12:9080
-ss://MjAyMi1ibGFrZTMtYWVzLTI1Ni1nY206cFo0K1p1c2FnaG9rc0NVUjc1TDJUVlEwekZQdWdXd2dwdURweVh6eG1jYz06VC9BVXMvcHdNM0FkcXdYbG4wclAwWWlKdDdlcU0rZ0huVUFsVUpsUWFEQT0=@188.34.194.165:80# By EbraSha 🔮
-socks5://49.13.22.249:10813
-socks5://95.111.228.190:1081
 socks5://49.13.22.249:10809
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpJWGEzeWx6U19qQk9Bc1F5MDcxdElR@94.249.187.46:1080#🇩🇪[openproxylist.com] ss-DE
+socks5://5.75.133.113:10809
+vless://CONFIG-WANCLOUDFA@49.12.64.220:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#%DA%A9%D8%A7%D9%86%D8%A7%D9%84+%3A+%40V2rayNGvpni
 vless://cf990ae8-ee77-4436-aa3a-bbc2fb040c53@46.224.170.213:443?encryption=none&headerType=http&host=store.steampowered.com&path=/&security=none&type=tcp#🇩🇪[openproxylist.com] vless-DE
-vless://8db764be-f144-4df0-ae5d-21d5f2551290@md.gilangard.ir:11431?security=reality&amp;encryption=none&amp;pbk=-mmOMxUx52Rj14VuE5fhlsvh7qt5WT9WEZy5LQlnSDc&amp;headerType=none&amp;fp=qq&amp;type=tcp&amp;sni=play.google.com&amp;sid=d8de8785395c206b#@V2rayng3
+socks5://49.13.22.249:10806
+vless://69d8dc73-20ff-4241-bdd8-a9d6d07553b6@91.107.179.8:15003?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#Free%20x234%20%40Outline_Vpn
+socks5://5.75.133.113:10814
+ss://3a5a2bfd-97d5-4a35-bd9f-abb117b79f40@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718# By EbraSha 🌀
+http://91.107.188.12:9087
+ss://69d8dc73-20ff-4241-bdd8-a9d6d07553b6@91.107.179.8:15003?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#Free%20x234%20%40Outline_Vpn
+ss://d512bf3d-3d5f-433e-b51f-dfb321720a6d@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718#Free%20x325%20%40Outline_Vpn
+ss://9f44d517-29f2-4c6d-cc06-a1268f13da58@host.taghvimtime.ir:8443?mode=auto&amp;path=%2FMeh%3Fdi%3D443&amp;security=tls&amp;alpn=h2&amp;encryption=none&amp;extra=%7B%22scMaxBufferedPosts%22%3A30%2C%22scMaxEachPostBytes%22%3A%221000000%22%2C%22scStreamUpServerSecs%22%3A%2220-80%22%2C%22xPaddingBytes%22%3A%22100-1000%22%2C%22scMinPostsIntervalMs%22%3A%2230%22%2C%22xmux%22%3A%7B%22maxConcurrency%22%3A%2216-32%22%2C%22maxConnections%22%3A0%2C%22cMaxReuseTimes%22%3A0%2C%22hMaxRequestTimes%22%3A%22600-900%22%2C%22hMaxReusableSecs%22%3A%221800-3000%22%2C%22hKeepAlivePeriod%22%3A0%7D%7D&amp;insecure=0&amp;host=host.taghvimtime.ir&amp;fp=chrome&amp;type=xhttp&amp;allowInsecure=0&amp;sni=host.taghvimtime.ir# By EbraSha 📼
 ss://CONFIG-WANCLOUDFA@49.12.64.220:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp# By EbraSha 📛
-ss://153ee04c-dcc1-4ef8-a146-8fb31cec1f48@91.99.192.185:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 🛡️
-vless://9f44d517-29f2-4c6d-cc06-a1268f13da58@host.taghvimtime.ir:8443?mode=auto&amp;path=%2FMeh%3Fdi%3D443&amp;security=tls&amp;alpn=h2&amp;encryption=none&amp;extra=%7B%22scMaxBufferedPosts%22%3A30%2C%22scMaxEachPostBytes%22%3A%221000000%22%2C%22scStreamUpServerSecs%22%3A%2220-80%22%2C%22xPaddingBytes%22%3A%22100-1000%22%2C%22scMinPostsIntervalMs%22%3A%2230%22%2C%22xmux%22%3A%7B%22maxConcurrency%22%3A%2216-32%22%2C%22maxConnections%22%3A0%2C%22cMaxReuseTimes%22%3A0%2C%22hMaxRequestTimes%22%3A%22600-900%22%2C%22hMaxReusableSecs%22%3A%221800-3000%22%2C%22hKeepAlivePeriod%22%3A0%7D%7D&amp;insecure=0&amp;host=host.taghvimtime.ir&amp;fp=chrome&amp;type=xhttp&amp;allowInsecure=0&amp;sni=host.taghvimtime.ir#%40FreeLand8%F0%9F%94%A5
+ss://MjAyMi1ibGFrZTMtYWVzLTEyOC1nY206MUp2bG10VDR2OHkxeUdjekR0VDZXdz09OmFDdHBlTWlldEdzSlk1MGg2akRXNnc9PQ@dopr.rehan-iogsar.ir:4680# By EbraSha 🦂
+http://157.90.10.50:80
+socks5://49.13.22.249:10813
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpJWGEzeWx6U19qQk9Bc1F5MDcxdElR@5.75.192.44:1080# By EbraSha 🧲
 socks5://49.13.87.123:1202
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTplcHQyVjZ5YXJXemF6WlN0TXUwQ3FNLWp4M05OMndHMA@jgzt1997.qivfelo.ir:5052# By EbraSha 🪐
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprZ19ubklCX1RmYXM2Y1VES0R5eWpxZmMzN08wOHczXw@91.107.178.93:22383# By EbraSha 🕷️
+socks5://49.13.22.249:10805
+socks5://49.13.22.249:10803
+http://91.107.188.12:9088
+http://138.199.221.100:9050
+ss://69d8dc73-20ff-4241-bdd8-a9d6d07553b6@91.107.179.8:15003?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp# By EbraSha 🧊
+ss://88b9da00-7a25-45ec-859b-14ad57a6bd2b@91.99.179.203:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 🚀
+trojan://humanity@88.198.82.150:443?path=%2Fassignment&amp;security=tls&amp;insecure=0&amp;fp=chrome&amp;type=ws&amp;allowInsecure=0&amp;sni=www.ignitelimit.com#%40FreeLand8%20%F0%9F%87%AA%F0%9F%87%BA
+socks5://49.13.22.249:10802
+socks5://49.13.22.249:10812
+http://152.53.183.107:8082
+vless://d512bf3d-3d5f-433e-b51f-dfb321720a6d@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718#Free%20x325%20%40Outline_Vpn
+socks5://85.190.106.223:1080
 vless://edde565e-41f5-400e-84ea-7b87a3e84488@152.53.1.40:443?encryption=none&type=tcp&flow=xtls-rprx-vision&security=reality&sni=at.quattro-tech.ru&fp=chrome&pbk=10rVZPoOUP1TlQviIAsQ_jAROX0fRQxH0C92nq_zGQc&sid=43dcff53849b81e6&allowInsecure=1#🇦🇹[openproxylist.com] vless-AT
-socks5://91.107.179.68:10809
-ss://f20769b0-7dd9-4d2a-bdc1-5d2b52091e90@11.foodtry.ir:2083?security=reality&amp;encryption=none&amp;pbk=k2FIq2XySl4OHuWDoD9hHfCwZWp4XDU33ewPeBywxUY&amp;headerType=none&amp;fp=ios&amp;spx=%2F&amp;type=tcp&amp;sni=play-apps-features.googleusercontent.com&amp;sid=14d97b93cc1650f1#Free%20x236%20%40Outline_Vpn
-socks5://5.75.133.113:10801
-ss://440766d1-858f-4719-84f5-c2de6f6227ba@65.108.231.185:443?security=tls&amp;alpn=h3%2Ch2%2Chttp%2F1.1&amp;encryption=none&amp;headerType=none&amp;type=tcp&amp;sni=local.rogsoftwaregroup.com# By EbraSha ✨
-http://77.42.112.157:9050
-socks5://49.13.22.249:10811
-http://31.220.78.244:80
-http://65.21.201.149:8081
-socks5://65.21.252.66:10802
-vless://c21631d5-36c9-4664-b575-97eca17456be@2.27.205.59:443?encryption=none&security=none&type=ws&host=neth8.lunariai.ru&path=/#🇩🇪[openproxylist.com] vless-DE
-socks5://65.21.252.66:10812
-socks5://65.21.252.66:10808
-vless://fd4b654f-9ae2-42c5-977b-6aa54e8e9a83@91.99.57.24:443?encryption=none&headerType=http&host=store.steampowered.com&path=%2F&security=none&type=tcp#🏳[openproxylist.com] vless-
-vless://f20769b0-7dd9-4d2a-bdc1-5d2b52091e90@11.foodtry.ir:2083?security=reality&amp;encryption=none&amp;pbk=k2FIq2XySl4OHuWDoD9hHfCwZWp4XDU33ewPeBywxUY&amp;headerType=none&amp;fp=ios&amp;spx=%2F&amp;type=tcp&amp;sni=play-apps-features.googleusercontent.com&amp;sid=14d97b93cc1650f1#Free%20x236%20%40Outline_Vpn
-socks5://65.21.252.66:10807
-http://135.181.79.187:40001
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpJWGEzeWx6U19qQk9Bc1F5MDcxdElR@94.249.187.46:1080#🇩🇪[openproxylist.com] ss-DE
+http://109.123.240.32:1080
+http://159.195.194.242:8080
 vless://1c3b5f09-d3f4-44cc-adfc-5d74a71d33f2@91.107.240.177:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp#%DA%A9%D8%A7%D9%86%D8%A7%D9%84+%3A+%40V2rayNGvpni
+socks5://109.123.249.138:10808
+ss://440766d1-858f-4719-84f5-c2de6f6227ba@65.108.231.185:443?security=tls&amp;alpn=h3%2Ch2%2Chttp%2F1.1&amp;encryption=none&amp;headerType=none&amp;type=tcp&amp;sni=local.rogsoftwaregroup.com# By EbraSha ✨
+socks5://65.21.252.66:10802
+socks5://152.53.183.107:8081
+socks5://65.21.252.66:10812
+socks5://65.21.252.66:10807
+http://77.42.112.157:9050
+http://65.21.201.149:8081
+vless://f20769b0-7dd9-4d2a-bdc1-5d2b52091e90@11.foodtry.ir:2083?security=reality&amp;encryption=none&amp;pbk=k2FIq2XySl4OHuWDoD9hHfCwZWp4XDU33ewPeBywxUY&amp;headerType=none&amp;fp=ios&amp;spx=%2F&amp;type=tcp&amp;sni=play-apps-features.googleusercontent.com&amp;sid=14d97b93cc1650f1#Free%20x236%20%40Outline_Vpn
+ss://f20769b0-7dd9-4d2a-bdc1-5d2b52091e90@11.foodtry.ir:2083?security=reality&amp;encryption=none&amp;pbk=k2FIq2XySl4OHuWDoD9hHfCwZWp4XDU33ewPeBywxUY&amp;headerType=none&amp;fp=ios&amp;spx=%2F&amp;type=tcp&amp;sni=play-apps-features.googleusercontent.com&amp;sid=14d97b93cc1650f1#Free%20x236%20%40Outline_Vpn
+http://135.181.79.187:40001
+socks5://65.21.252.66:10808
+socks5://5.75.133.113:10801
 vless://fd4b654f-9ae2-42c5-977b-6aa54e8e9a83@91.99.59.248:443?encryption=none&headerType=http&host=store.steampowered.com&path=%2F&security=none&type=tcp#🇩🇪[openproxylist.com] vless-DE
-http://194.163.175.167:40000
+vless://c21631d5-36c9-4664-b575-97eca17456be@2.27.205.59:443?encryption=none&security=none&type=ws&host=neth8.lunariai.ru&path=/#🇩🇪[openproxylist.com] vless-DE
+socks5://49.13.22.249:10811
+vless://fd4b654f-9ae2-42c5-977b-6aa54e8e9a83@91.99.57.24:443?encryption=none&headerType=http&host=store.steampowered.com&path=%2F&security=none&type=tcp#🏳[openproxylist.com] vless-
 vless://8df2e661-6f46-471b-9133-7fc13a0daa35@65.108.3.59:443?security=reality&encryption=none&pbk=jDoORbrtDrvAlFSo19CJbc99C4ev8SAo1MwczSUt9no&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=web.eitaa.com&sid=90ec9bba2019#🏳[openproxylist.com] vless-
 socks5://65.21.252.66:10811
-vless://d78de562-872e-43dd-be48-e9d7b06c87a3@62.238.103.54:2083?security=reality&encryption=none&pbk=tADYkZWWksM_mCqqwlRHCciSCXnP3JMYrPi5eoRHh2s&headerType=none&fp=chrome&spx=/&type=tcp&flow=xtls-rprx-vision&sni=www.yahoo.com&sid=d059fb98048c5318#🇫🇮[openproxylist.com] vless-FI
-ss://d342d11e-d424-4583-b36e-524ab1f0afa4@157.173.125.214:2087?path=%252Fredirect%252Fchina%252Fview%253Fed%253D2560&amp;security=tls&amp;encryption=none&amp;insecure=0&amp;host=cdn8848.776676.xyz&amp;fp=chrome&amp;type=ws&amp;allowInsecure=0&amp;sni=cdn8848.776676.xyz#Free%20x400%20%40Outline_Vpn
-socks5://144.91.111.48:1088
-socks5://158.220.99.85:4545
-socks5://144.91.121.61:1088
 socks5://213.199.47.140:1080
-http://109.199.107.68:1080
 socks5://109.123.251.109:1080
+socks5://144.91.111.48:1088
+socks5://144.91.121.61:1088
 ss://b7861fc7-1d21-4779-858a-c6a7df74d685@ticket.jorzel.ir:1007?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%A9%F0%9F%87%AA%40FreakConfig
 vless://b7861fc7-1d21-4779-858a-c6a7df74d685@ticket.jorzel.ir:1007?security=none&amp;encryption=none&amp;type=ws#%F0%9F%87%A9%F0%9F%87%AA%40FreakConfig
-http://85.214.107.177:80
-socks5://85.190.106.223:1080
-http://158.220.99.85:4545
 http://31.214.141.188:9999
+socks5://89.213.118.234:9050
+http://161.97.129.202:9060
+http://31.220.78.244:80
+http://152.53.183.107:8081
+http://65.108.103.19:80
+http://158.220.99.85:4545
+vless://d78de562-872e-43dd-be48-e9d7b06c87a3@62.238.103.54:2083?security=reality&encryption=none&pbk=tADYkZWWksM_mCqqwlRHCciSCXnP3JMYrPi5eoRHh2s&headerType=none&fp=chrome&spx=/&type=tcp&flow=xtls-rprx-vision&sni=www.yahoo.com&sid=d059fb98048c5318#🇫🇮[openproxylist.com] vless-FI
+socks5://158.220.99.85:4545

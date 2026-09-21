@@ -1,0 +1,1 @@
+vless://8be20011-59b1-4118-91ed-83e8e6b662cd@202.166.187.132:443?&security=tls&fp=firefox&sni=f.yoptybla.ru&type=ws&headerType=none&host=f.yoptybla.ru&path=%2F#🇫🇮[openproxylist.com] vless-FI
