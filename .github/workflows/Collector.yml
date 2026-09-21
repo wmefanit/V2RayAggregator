@@ -40,10 +40,10 @@ jobs:
         env:
           SOURCES_FILE: ${{ github.event.inputs.sources_file || 'sub/all_sources.json' }}
           MAX_CANDIDATES: ${{ github.event.inputs.max_candidates || '0' }}
-          TCP_CONCURRENCY: "1200"
-          DNS_CONCURRENCY: "300"
-          TCP_TIMEOUT_MS: "1500"
-          CHUNK_SIZE: "25000"
+          TCP_CONCURRENCY: "600"
+          DNS_CONCURRENCY: "200"
+          TCP_TIMEOUT_MS: "3500"
+          CHUNK_SIZE: "20000"
         run: |
           node probe.js "$SOURCES_FILE"
 

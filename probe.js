@@ -11,12 +11,12 @@ const zlib = require('zlib');
 
 const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/all_sources.json';
 const OUT_DIR = './dist';
-const TCP_CONCURRENCY = parseInt(process.env.TCP_CONCURRENCY || '1200', 10);
-const DNS_CONCURRENCY = parseInt(process.env.DNS_CONCURRENCY || '300', 10);
-const TCP_TIMEOUT_MS = parseInt(process.env.TCP_TIMEOUT_MS || '1500', 10);
+const TCP_CONCURRENCY = parseInt(process.env.TCP_CONCURRENCY || '600', 10);
+const DNS_CONCURRENCY = parseInt(process.env.DNS_CONCURRENCY || '200', 10);
+const TCP_TIMEOUT_MS = parseInt(process.env.TCP_TIMEOUT_MS || '3500', 10);
 const DNS_TIMEOUT_MS = parseInt(process.env.DNS_TIMEOUT_MS || '4000', 10);
 const MAX_CANDIDATES = parseInt(process.env.MAX_CANDIDATES || '0', 10);
-const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '25000', 10);
+const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '20000', 10);
 
 // ---------- 离线 ASN 库：真实 IP -> 国家/ASN/运营商 ----------
 let ASN_TABLE = [];
@@ -156,7 +156,16 @@ function countryFromRemark(remark) {
   return '';
 }
 
-function tcpProbe(ip, port) {
+// 纯 CDN ASN 黑名单正则 (若节点是裸 IP + 属于纯 CDN 边缘，则 80/443 仅为 CDN 静态握手，不可作为代理)
+const PURE_CDN_ORG_REGEX = /^(CLOUDFLARENET|CLOUDFLARESPECTRUM|FASTLY|AKAMAI-AS|AKAMAI-ASN1|EDGECAST|IMPERVA|INCAPSULA)/i;
+function isCdnPseudoNode(host, org) {
+  if (!org || !PURE_CDN_ORG_REGEX.test(org)) return false;
+  // 如果是裸 IP 直接指向 CDN，必然是假节点
+  return net.isIP(host) !== 0;
+}
+
+// ---------- 原生 L7 轻量级真实验活 (HTTP CONNECT 与 SOCKS5) ----------
+function probeL7Http(ip, port, timeoutMs = 3000) {
   return new Promise((resolve) => {
     const start = Date.now();
     const sock = new net.Socket();
@@ -167,12 +176,103 @@ function tcpProbe(ip, port) {
       try { sock.destroy(); } catch (e) {}
       resolve(ok ? Date.now() - start : null);
     };
-    sock.setTimeout(TCP_TIMEOUT_MS);
+    sock.setTimeout(timeoutMs);
+    sock.once('timeout', () => finish(false));
+    sock.once('error', () => finish(false));
+    sock.connect(port, ip, () => {
+      // 发送 CONNECT 隧道握手 (目标 Cloudflare 204)
+      sock.write('CONNECT cp.cloudflare.com:80 HTTP/1.1\r\nHost: cp.cloudflare.com:80\r\nProxy-Connection: keep-alive\r\n\r\n');
+    });
+    let buf = '';
+    sock.on('data', (chunk) => {
+      buf += chunk.toString('utf8');
+      if (buf.includes('200 Connection established') || buf.includes(' 200 OK') || buf.includes(' 200 ')) {
+        finish(true);
+      } else if (buf.length > 500 || buf.includes('HTTP/1.')) {
+        // 返回 400/403/502 等非 200 隧道建立，直接判定为假代理
+        finish(false);
+      }
+    });
+  });
+}
+
+function probeL7Socks5(ip, port, timeoutMs = 3000) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const sock = new net.Socket();
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      try { sock.destroy(); } catch (e) {}
+      resolve(ok ? Date.now() - start : null);
+    };
+    sock.setTimeout(timeoutMs);
+    sock.once('timeout', () => finish(false));
+    sock.once('error', () => finish(false));
+    sock.connect(port, ip, () => {
+      // SOCKS5 协商阶段 1: 认证方式选择 (NO AUTHENTICATION REQUIRED)
+      sock.write(Buffer.from([0x05, 0x01, 0x00]));
+    });
+    let stage = 1;
+    sock.on('data', (chunk) => {
+      if (stage === 1) {
+        if (chunk.length >= 2 && chunk[0] === 0x05 && chunk[1] === 0x00) {
+          // 协商成功，阶段 2: 发起 CONNECT 请求连接 cp.cloudflare.com (1.1.1.1:80)
+          stage = 2;
+          sock.write(Buffer.from([0x05, 0x01, 0x00, 0x01, 1, 1, 1, 1, 0x00, 0x50]));
+        } else {
+          finish(false);
+        }
+      } else if (stage === 2) {
+        if (chunk.length >= 2 && chunk[0] === 0x05 && chunk[1] === 0x00) {
+          // REP = 0x00 代表 SOCKS5 隧道连接成功
+          finish(true);
+        } else {
+          finish(false);
+        }
+      }
+    });
+  });
+}
+
+async function probeL7(proto, ip, port) {
+  const p = (proto || '').toLowerCase();
+  if (p === 'http' || p === 'https') {
+    return await probeL7Http(ip, port);
+  }
+  if (p === 'socks5') {
+    return await probeL7Socks5(ip, port);
+  }
+  return null;
+}
+
+// 单次 TCP 握手探测
+function tcpProbeOnce(ip, port, timeoutMs) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const sock = new net.Socket();
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      try { sock.destroy(); } catch (e) {}
+      resolve(ok ? Date.now() - start : null);
+    };
+    sock.setTimeout(timeoutMs);
     sock.once('connect', () => finish(true));
     sock.once('timeout', () => finish(false));
     sock.once('error', () => finish(false));
     sock.connect(port, ip);
   });
+}
+
+// 带 1 次重试的 TCP 探针 (防止跨洋瞬时抖动被误杀)
+async function tcpProbe(ip, port) {
+  const rtt = await tcpProbeOnce(ip, port, TCP_TIMEOUT_MS);
+  if (rtt !== null) return rtt;
+  // 初次超时或失败，重试一次 (给 2500ms)
+  return await tcpProbeOnce(ip, port, 2500);
 }
 
 async function runPool(items, worker, concurrency) {
@@ -257,9 +357,21 @@ async function main() {
     probeTotal += tasks.length;
 
     const probed = await runPool(tasks, async (item) => {
+      const geo = lookupAsn(item.ip);
+      const org = geo ? geo.org : '';
+      // 阶段 0 纯静态拦截：裸 IP + 纯 CDN ASN 的假节点直接拦截，不消耗 TCP 探测资源
+      if (isCdnPseudoNode(item.ep.host, org)) {
+        return null;
+      }
+
       const rtt = await tcpProbe(item.ip, item.ep.port);
       if (rtt !== null) {
-        const geo = lookupAsn(item.ip);
+        // L7 真实验活：仅对协议明确可验证的 HTTP/HTTPS/SOCKS5 做隧道握手；Xray 协议交由本地网关校验
+        let l7 = null;
+        const p = (item.ep.proto || '').toLowerCase();
+        if (p === 'http' || p === 'https' || p === 'socks5') {
+          l7 = (await probeL7(item.ep.proto, item.ip, item.ep.port)) !== null;
+        }
         return {
           link: item.link,
           proto: item.ep.proto,
@@ -269,9 +381,10 @@ async function main() {
           remark: item.ep.remark,
           country: (geo && geo.country) || countryFromRemark(item.ep.remark) || 'OTHER',
           asn: geo ? geo.asn : '',
-          org: geo ? geo.org : '',
+          org: org,
           country_source: geo && geo.country ? 'asn_db' : 'remark',
           rtt_ms: rtt,
+          l7_verified: l7,
         };
       }
       return null;
@@ -305,8 +418,12 @@ async function main() {
   fs.writeFileSync('all_exit_meta.txt', alive.map(n =>
     `[${n.country || 'XX'}|${n.asn || '-'}|${n.rtt_ms}ms] ${n.link}`).join('\n'));
 
-  // 2. 低延迟优质池 (Top 500)
-  const topFast = alive.slice(0, 500);
+  // 2. 真实可用优质池 (优先 L7 已验活的 HTTP/SOCKS5 与经过 ASN 清洗的 Xray 优质节点)
+  const l7Verified = alive.filter(n => n.l7_verified === true);
+  const xrayCandidates = alive.filter(n => n.l7_verified === null); // Xray 等由本地网关做精准鉴权
+  // high_speed: 优先填充 100% L7 验活的极速节点，不足部分由 Xray 节点补齐
+  const topFast = [...l7Verified, ...xrayCandidates].slice(0, 500);
+  
   fs.writeFileSync('high_speed.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity', Buffer.from(topFast.map(n => n.link).join('\n')).toString('base64'));
@@ -329,6 +446,7 @@ async function main() {
     valid_endpoints: parsedTotal,
     dns_resolved_and_probed: probeTotal,
     alive_nodes: alive.length,
+    l7_verified_nodes: l7Verified.length,
     top_fast_nodes: topFast.length,
     countries: Object.fromEntries(Object.entries(countryMap).map(([k, v]) => [k, v.length])),
     protocols: Object.fromEntries(Object.entries(protoMap).map(([k, v]) => [k, v.length])),
@@ -338,7 +456,7 @@ async function main() {
 
   console.log('🎉 订阅产物导出完成：');
   console.log(`- all_exit.txt: ${alive.length} 节点 (全量多出口池)`);
-  console.log(`- high_speed.txt: ${topFast.length} 节点 (优质低延迟池)`);
+  console.log(`- high_speed.txt: ${topFast.length} 节点 (含 ${l7Verified.length} 个 L7 真实验活节点)`);
   console.log(`- dist/by_country/: ${Object.keys(countryMap).length} 个国家地区分流`);
   console.log(`- dist/by_protocol/: ${Object.keys(protoMap).length} 个协议分流`);
   console.log(`- summary.json: 统计摘要报告`);
