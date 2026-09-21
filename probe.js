@@ -7,6 +7,43 @@ const http = require('http');
 const net = require('net');
 const dns = require('dns').promises;
 const url = require('url');
+const zlib = require('zlib');
+
+// 离线 ASN 库：IP -> 国家/ASN/运营商（真实归属，非备注猜测）
+let ASN_TABLE = [];
+function ipToInt(ip) {
+  const p = ip.split('.').map(Number);
+  return ((p[0] << 24) >>> 0) + (p[1] << 16) + (p[2] << 8) + p[3];
+}
+function loadAsnTable(file = './data/ip2asn-v4.tsv.gz') {
+  try {
+    const buf = zlib.gunzipSync(fs.readFileSync(file));
+    for (const line of buf.toString('utf8').trim().split('\n')) {
+      const p = line.split('\t');
+      if (p.length >= 5) {
+        ASN_TABLE.push({ start: ipToInt(p[0]), end: ipToInt(p[1]), asn: p[2], country: p[3], org: p[4] });
+      }
+    }
+    console.log(`离线 ASN 库加载完成: ${ASN_TABLE.length} 条`);
+  } catch (e) {
+    console.log('ASN 库缺失，国家归属回退到备注解析');
+  }
+}
+function lookupAsn(ip) {
+  if (!ASN_TABLE.length || !ip || !/^\d+\.\d+\.\d+\.\d+$/.test(ip)) return null;
+  const target = ipToInt(ip);
+  let low = 0, high = ASN_TABLE.length - 1;
+  while (low <= high) {
+    const mid = (low + high) >> 1;
+    const r = ASN_TABLE[mid];
+    if (target >= r.start && target <= r.end) {
+      return { country: r.country === 'None' ? '' : r.country, asn: r.asn === '0' ? '' : 'AS' + r.asn, org: r.org };
+    }
+    if (target < r.start) high = mid - 1;
+    else low = mid + 1;
+  }
+  return null;
+}
 
 const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/sample_sources.json';
 const OUT_DIR = './dist';
@@ -196,6 +233,7 @@ async function main() {
   }
 
   const catalog = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
+  loadAsnTable();
   const taskUrls = [];
   for (const src of (catalog.sources || [])) {
     if (src.enabled === false) continue;
@@ -270,6 +308,7 @@ async function main() {
       console.log(`  探活进度: ${checkedCount} / ${probeTasks.length} ...`);
     }
     if (rtt !== null) {
+      const geo = lookupAsn(item.targetIP);
       return {
         link: item.link,
         proto: item.ep.proto,
@@ -277,7 +316,10 @@ async function main() {
         ip: item.targetIP,
         port: item.ep.port,
         remark: item.ep.remark,
-        country: extractCountry(item.ep.remark, item.ep.host),
+        country: (geo && geo.country) || extractCountry(item.ep.remark, item.ep.host),
+        asn: geo ? geo.asn : '',
+        org: geo ? geo.org : '',
+        country_source: geo && geo.country ? 'asn_db' : 'remark',
         rtt_ms: rtt
       };
     }
@@ -290,6 +332,7 @@ async function main() {
   alive.sort((a, b) => a.rtt_ms - b.rtt_ms);
 
   console.log('\n=== [4/4] 导出多场景结构化分流订阅 ===');
+  fs.rmSync(OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(path.join(OUT_DIR, 'by_country'), { recursive: true });
   fs.mkdirSync(path.join(OUT_DIR, 'by_protocol'), { recursive: true });
 
@@ -307,6 +350,9 @@ async function main() {
   fs.writeFileSync('all_exit.json', JSON.stringify(alive, null, 2));
   fs.writeFileSync('all_exit.txt', alive.map(n => n.link).join('\n'));
   fs.writeFileSync('all_exit_base64.txt', Buffer.from(alive.map(n => n.link).join('\n')).toString('base64'));
+  // 带元数据标签的可读清单，供人工快速筛选与本地网关解析
+  fs.writeFileSync('all_exit_meta.txt', alive.map(n =>
+    `[${n.country || 'XX'}|${n.asn || '-'}|${n.rtt_ms}ms] ${n.link}`).join('\n'));
 
   // 2. 低延迟优质池 (Top 100)
   const topFast = alive.slice(0, 100);
