@@ -1,0 +1,102 @@
+{
+  "updated_at": "2026-09-21T20:00:09.256Z",
+  "total_raw_nodes": 63204,
+  "alive_nodes": 153,
+  "high_speed_nodes": 120,
+  "countries": [
+    {
+      "country": "US",
+      "count": 20
+    },
+    {
+      "country": "GB",
+      "count": 60
+    },
+    {
+      "country": "NL",
+      "count": 18
+    },
+    {
+      "country": "CA",
+      "count": 13
+    },
+    {
+      "country": "SE",
+      "count": 2
+    },
+    {
+      "country": "FR",
+      "count": 5
+    },
+    {
+      "country": "IT",
+      "count": 1
+    },
+    {
+      "country": "ES",
+      "count": 1
+    },
+    {
+      "country": "DE",
+      "count": 4
+    },
+    {
+      "country": "FI",
+      "count": 2
+    },
+    {
+      "country": "ZA",
+      "count": 5
+    },
+    {
+      "country": "AY",
+      "count": 2
+    },
+    {
+      "country": "NO",
+      "count": 1
+    },
+    {
+      "country": "DK",
+      "count": 2
+    },
+    {
+      "country": "JP",
+      "count": 7
+    },
+    {
+      "country": "RO",
+      "count": 3
+    },
+    {
+      "country": "SG",
+      "count": 1
+    },
+    {
+      "country": "KR",
+      "count": 2
+    },
+    {
+      "country": "IN",
+      "count": 2
+    },
+    {
+      "country": "TH",
+      "count": 1
+    },
+    {
+      "country": "HK",
+      "count": 1
+    }
+  ],
+  "protocols": [
+    {
+      "protocol": "ss",
+      "count": 145
+    },
+    {
+      "protocol": "vmess",
+      "count": 8
+    }
+  ]
+}
