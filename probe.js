@@ -5,11 +5,13 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const net = require('net');
+const dns = require('dns').promises;
 const url = require('url');
 
-const ALL_SOURCES_PATH = process.argv[2] || process.env.SOURCES_FILE || './sub/sample_sources.json';
+const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/sample_sources.json';
 const OUT_DIR = './dist';
-const TCP_CONCURRENCY = 1000;
+const TCP_CONCURRENCY = 500;
+const DNS_CONCURRENCY = 100;
 const TCP_TIMEOUT_MS = 2000;
 
 function fetchText(targetUrl, timeoutMs = 15000, redirects = 3) {
@@ -17,9 +19,8 @@ function fetchText(targetUrl, timeoutMs = 15000, redirects = 3) {
     let settled = false;
     const done = (v) => { if (!settled) { settled = true; resolve(v); } };
     const client = targetUrl.startsWith('https') ? https : http;
-    let req;
     try {
-      req = client.get(targetUrl, { timeout: timeoutMs, headers: { 'User-Agent': 'v2rayN/6.23 ClashMeta/v1.18.0' } }, (res) => {
+      const req = client.get(targetUrl, { timeout: timeoutMs, headers: { 'User-Agent': 'v2rayN/6.23 ClashMeta/v1.18.0' } }, (res) => {
         if ([301, 302, 303, 307, 308].includes(res.statusCode) && res.headers.location && redirects > 0) {
           res.resume();
           const next = new url.URL(res.headers.location, targetUrl).toString();
@@ -29,9 +30,9 @@ function fetchText(targetUrl, timeoutMs = 15000, redirects = 3) {
         res.on('data', (c) => chunks.push(c));
         res.on('end', () => done(Buffer.concat(chunks).toString('utf8')));
       });
+      req.on('error', () => done(''));
+      req.on('timeout', () => { req.destroy(); done(''); });
     } catch (e) { return done(''); }
-    req.on('error', () => done(''));
-    req.on('timeout', () => { req.destroy(); done(''); });
   });
 }
 
@@ -47,7 +48,6 @@ function maybeBase64Decode(text) {
   return text;
 }
 
-// 支持提取 IP:Port 以及各类代理 URL
 const IP_PORT_REGEX = /^(\d{1,3}(?:\.\d{1,3}){3}):(\d{1,5})$/;
 
 function extractAllCandidates(text, defaultType = 'http') {
@@ -57,13 +57,11 @@ function extractAllCandidates(text, defaultType = 'http') {
     const line = raw.trim();
     if (!line || line.startsWith('#') || line.startsWith('//')) continue;
 
-    // 1. 协议 URL (vmess, ss, trojan, vless, socks5, http)
     if (/^(vmess|vless|trojan|ss|ssr|socks5|socks4|http|https):\/\//i.test(line)) {
       list.push(line);
       continue;
     }
 
-    // 2. 纯 IP:Port 格式 (如 1.2.3.4:8080)
     const m = line.match(IP_PORT_REGEX);
     if (m) {
       const port = parseInt(m[2], 10);
@@ -126,7 +124,7 @@ function extractCountry(remark, host) {
   return 'OTHER';
 }
 
-function tcpProbe(host, port) {
+function tcpProbe(ip, port) {
   return new Promise((resolve) => {
     const start = Date.now();
     const sock = new net.Socket();
@@ -141,7 +139,7 @@ function tcpProbe(host, port) {
     sock.once('connect', () => finish(true));
     sock.once('timeout', () => finish(false));
     sock.once('error', () => finish(false));
-    sock.connect(port, host);
+    sock.connect(port, ip);
   });
 }
 
@@ -161,9 +159,14 @@ async function runPool(items, worker, concurrency) {
 
 async function main() {
   const t0 = Date.now();
-  console.log('=== [1/3] 云端全量抓取 62 个数据源 (124 条 URL 规则) ===');
+  console.log(`=== [1/4] 读取源配置: ${CONFIG_FILE} ===`);
 
-  const catalog = JSON.parse(fs.readFileSync(ALL_SOURCES_PATH, 'utf8'));
+  if (!fs.existsSync(CONFIG_FILE)) {
+    console.error(`错误: ${CONFIG_FILE} 不存在`);
+    process.exit(1);
+  }
+
+  const catalog = JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf8'));
   const taskUrls = [];
   for (const src of (catalog.sources || [])) {
     if (src.enabled === false) continue;
@@ -174,41 +177,66 @@ async function main() {
     }
   }
 
-  console.log(`有效待抓取 URL 任务数: ${taskUrls.length}`);
-
+  console.log(`待抓取任务数: ${taskUrls.length}`);
   const fetched = await runPool(taskUrls, async (t) => {
     const txt = await fetchText(t.url);
     const cands = extractAllCandidates(txt, t.type);
-    console.log(`  - [${t.name}] (${t.type}) -> ${cands.length} 候选`);
+    console.log(`  - [${t.name}] (${t.type}) -> 抓取到 ${cands.length} 条`);
     return cands;
-  }, 16);
+  }, 8);
 
-  const rawSet = new Set(fetched.flat());
-  const rawList = Array.from(rawSet);
-  console.log(`\n🎉 百万池去重后全量候选总数: ${rawList.length}`);
+  const rawList = Array.from(new Set(fetched.flat()));
+  console.log(`去重后候选总数: ${rawList.length}`);
 
-  console.log(`\n=== [2/3] 全量端点解析与 ${TCP_CONCURRENCY} 并发云端探活 ===`);
+  console.log('\n=== [2/4] 解析端点与批量异步 DNS 预解析 ===');
   const parsed = [];
+  const domainSet = new Set();
   for (const link of rawList) {
     const ep = parseHostPort(link);
     if (ep && ep.port > 0 && ep.port < 65536) {
       parsed.push({ link, ep });
+      if (!net.isIP(ep.host)) {
+        domainSet.add(ep.host);
+      }
     }
   }
-  console.log(`可有效拨号端点数: ${parsed.length} / ${rawList.length}`);
+  console.log(`有效格式端点: ${parsed.length} (其中独立域名: ${domainSet.size})`);
+
+  // 并发纯异步 DNS 预解析
+  const dnsCache = new Map();
+  const domains = Array.from(domainSet);
+  await runPool(domains, async (d) => {
+    try {
+      const res = await dns.lookup(d, { family: 4 });
+      dnsCache.set(d, res.address);
+    } catch(e) {
+      dnsCache.set(d, null);
+    }
+  }, DNS_CONCURRENCY);
+
+  console.log(`DNS 预解析完成 (命中率: ${Array.from(dnsCache.values()).filter(Boolean).length} / ${domains.length})`);
+
+  console.log(`\n=== [3/4] 启动 ${TCP_CONCURRENCY} 并发 IP 直接拨测探活 ===`);
+  const probeTasks = parsed.map(item => {
+    const ip = net.isIP(item.ep.host) ? item.ep.host : dnsCache.get(item.ep.host);
+    return { ...item, targetIP: ip };
+  }).filter(item => Boolean(item.targetIP));
+
+  console.log(`进入探活队列数: ${probeTasks.length}`);
 
   let checkedCount = 0;
-  const probed = await runPool(parsed, async (item) => {
-    const rtt = await tcpProbe(item.ep.host, item.ep.port);
+  const probed = await runPool(probeTasks, async (item) => {
+    const rtt = await tcpProbe(item.targetIP, item.ep.port);
     checkedCount++;
-    if (checkedCount % 20000 === 0) {
-      console.log(`  已拨号: ${checkedCount} / ${parsed.length} ...`);
+    if (checkedCount % 5000 === 0 || checkedCount === probeTasks.length) {
+      console.log(`  探活进度: ${checkedCount} / ${probeTasks.length} ...`);
     }
     if (rtt !== null) {
       return {
         link: item.link,
         proto: item.ep.proto,
         host: item.ep.host,
+        ip: item.targetIP,
         port: item.ep.port,
         remark: item.ep.remark,
         country: extractCountry(item.ep.remark, item.ep.host),
@@ -219,11 +247,11 @@ async function main() {
   }, TCP_CONCURRENCY);
 
   const alive = probed.filter(Boolean);
-  console.log(`\n探活完成: 存活可用节点数 ${alive.length} / ${parsed.length} (耗时: ${Math.round((Date.now() - t0) / 1000)}s)`);
+  console.log(`\n探活完成: 存活可用数 ${alive.length} / ${probeTasks.length} (耗时: ${Math.round((Date.now() - t0) / 1000)}s)`);
 
   alive.sort((a, b) => a.rtt_ms - b.rtt_ms);
 
-  console.log('\n=== [3/3] 产出多维度百万级清洗订阅 ===');
+  console.log('\n=== [4/4] 导出多场景结构化分流订阅 ===');
   fs.mkdirSync(path.join(OUT_DIR, 'by_country'), { recursive: true });
   fs.mkdirSync(path.join(OUT_DIR, 'by_protocol'), { recursive: true });
 
@@ -237,13 +265,13 @@ async function main() {
     protoMap[n.proto].push(n.link);
   }
 
-  // 1. 全量多出口存活池
+  // 1. 全量存活多出口池
   fs.writeFileSync('all_exit.json', JSON.stringify(alive, null, 2));
   fs.writeFileSync('all_exit.txt', alive.map(n => n.link).join('\n'));
   fs.writeFileSync('all_exit_base64.txt', Buffer.from(alive.map(n => n.link).join('\n')).toString('base64'));
 
-  // 2. 低延迟优质池 (Top 200)
-  const topFast = alive.slice(0, 200);
+  // 2. 低延迟优质池 (Top 100)
+  const topFast = alive.slice(0, 100);
   fs.writeFileSync('high_speed.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity', Buffer.from(topFast.map(n => n.link).join('\n')).toString('base64'));
@@ -258,11 +286,12 @@ async function main() {
     fs.writeFileSync(path.join(OUT_DIR, 'by_protocol', `${p.toLowerCase()}.txt`), links.join('\n'));
   }
 
-  // 5. 总体报表
+  // 5. 总体报告
   const summary = {
     updated_at: new Date().toISOString(),
     total_raw_candidates: rawList.length,
     valid_endpoints: parsed.length,
+    dns_resolved: probeTasks.length,
     alive_nodes: alive.length,
     top_fast_nodes: topFast.length,
     countries: Object.fromEntries(Object.entries(countryMap).map(([k, v]) => [k, v.length])),
@@ -271,10 +300,12 @@ async function main() {
   };
   fs.writeFileSync('summary.json', JSON.stringify(summary, null, 2));
 
-  console.log('🎉 百万池云端清洗完成！');
-  console.log(`- all_exit.txt: ${alive.length} 节点 (全量多出口池)`);
-  console.log(`- high_speed.txt: ${topFast.length} 节点 (低延迟精选)`);
+  console.log('🎉 订阅产物导出完成：');
+  console.log(`- all_exit.txt: ${alive.length} 节点 (全量多出口备选池)`);
+  console.log(`- high_speed.txt: ${topFast.length} 节点 (低延迟精选池)`);
   console.log(`- dist/by_country/: ${Object.keys(countryMap).length} 个国家地区分流`);
+  console.log(`- dist/by_protocol/: ${Object.keys(protoMap).length} 个协议分流`);
+  console.log(`- summary.json: 统计摘要报告`);
 }
 
 main().catch(e => {
