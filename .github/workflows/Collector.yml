@@ -1,12 +1,16 @@
-name: Fast Multi-Exit Prober
+name: Multi-Exit Prober (Cloud)
 
 on:
   workflow_dispatch:
     inputs:
       sources_file:
-        description: '源清单文件 (sub/sample_sources.json 或 sub/all_sources.json)'
+        description: '源清单 (sub/sample_sources.json 或 sub/all_sources.json)'
         required: false
         default: 'sub/sample_sources.json'
+      max_candidates:
+        description: '最大探测候选数 (0 = 不限/全量百万)'
+        required: false
+        default: '5000'
   schedule:
     - cron: "0 */6 * * *"
 
@@ -24,13 +28,17 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Run Prober
+      - name: Run Cloud Prober
+        env:
+          SOURCES_FILE: ${{ github.event.inputs.sources_file || 'sub/sample_sources.json' }}
+          MAX_CANDIDATES: ${{ github.event.inputs.max_candidates || '5000' }}
+          TCP_CONCURRENCY: "500"
+          DNS_CONCURRENCY: "200"
+          TCP_TIMEOUT_MS: "2000"
         run: |
-          SRC="${{ github.event.inputs.sources_file || 'sub/sample_sources.json' }}"
-          echo "使用源清单: $SRC"
-          node probe.js "$SRC"
+          node probe.js "$SOURCES_FILE"
 
-      - name: Commit & Push Output
+      - name: Commit & Push Distribution
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -38,6 +46,6 @@ jobs:
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Probed"
+            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Multi-Exit Distribution"
             git push origin master
           fi

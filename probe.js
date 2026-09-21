@@ -10,9 +10,21 @@ const url = require('url');
 
 const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/sample_sources.json';
 const OUT_DIR = './dist';
-const TCP_CONCURRENCY = 500;
-const DNS_CONCURRENCY = 100;
-const TCP_TIMEOUT_MS = 2000;
+const TCP_CONCURRENCY = parseInt(process.env.TCP_CONCURRENCY || '500', 10);
+const DNS_CONCURRENCY = parseInt(process.env.DNS_CONCURRENCY || '200', 10);
+const DNS_TIMEOUT_MS = parseInt(process.env.DNS_TIMEOUT_MS || '5000', 10);
+const TCP_TIMEOUT_MS = parseInt(process.env.TCP_TIMEOUT_MS || '2000', 10);
+// 0 = 不限制；小样本验证用上限控制规模
+const MAX_PER_SOURCE = parseInt(process.env.MAX_PER_SOURCE || '0', 10);
+const MAX_CANDIDATES = parseInt(process.env.MAX_CANDIDATES || '0', 10);
+
+// 用 c-ares（dns.resolve4）纯异步解析，避免 dns.lookup 走 libuv 4 线程池卡死
+function resolveA(host) {
+  return Promise.race([
+    dns.resolve4(host).then((ips) => (Array.isArray(ips) && ips[0]) || null).catch(() => null),
+    new Promise((r) => setTimeout(() => r(null), DNS_TIMEOUT_MS)),
+  ]);
+}
 
 function fetchText(targetUrl, timeoutMs = 15000, redirects = 3) {
   return new Promise((resolve) => {
@@ -180,8 +192,12 @@ async function main() {
   console.log(`待抓取任务数: ${taskUrls.length}`);
   const fetched = await runPool(taskUrls, async (t) => {
     const txt = await fetchText(t.url);
-    const cands = extractAllCandidates(txt, t.type);
-    console.log(`  - [${t.name}] (${t.type}) -> 抓取到 ${cands.length} 条`);
+    let cands = extractAllCandidates(txt, t.type);
+    const rawCount = cands.length;
+    if (MAX_PER_SOURCE > 0 && cands.length > MAX_PER_SOURCE) {
+      cands = cands.slice(0, MAX_PER_SOURCE);
+    }
+    console.log(`  - [${t.name}] (${t.type}) -> 抓取到 ${rawCount} 条` + (cands.length !== rawCount ? `，采样取 ${cands.length}` : ''));
     return cands;
   }, 8);
 
@@ -189,32 +205,35 @@ async function main() {
   console.log(`去重后候选总数: ${rawList.length}`);
 
   console.log('\n=== [2/4] 解析端点与批量异步 DNS 预解析 ===');
-  const parsed = [];
-  const domainSet = new Set();
+  let parsed = [];
   for (const link of rawList) {
     const ep = parseHostPort(link);
     if (ep && ep.port > 0 && ep.port < 65536) {
       parsed.push({ link, ep });
-      if (!net.isIP(ep.host)) {
-        domainSet.add(ep.host);
-      }
     }
   }
-  console.log(`有效格式端点: ${parsed.length} (其中独立域名: ${domainSet.size})`);
+  console.log(`有效格式端点: ${parsed.length} / ${rawList.length}`);
+  if (MAX_CANDIDATES > 0 && parsed.length > MAX_CANDIDATES) {
+    console.log(`按 MAX_CANDIDATES=${MAX_CANDIDATES} 截断（原始 ${parsed.length}）`);
+    parsed = parsed.slice(0, MAX_CANDIDATES);
+  }
 
-  // 并发纯异步 DNS 预解析
+  const domainSet = new Set();
+  for (const item of parsed) {
+    if (!net.isIP(item.ep.host)) domainSet.add(item.ep.host);
+  }
+  console.log(`其中独立域名: ${domainSet.size}`);
+
+  // 并发纯异步 DNS 预解析（c-ares）
   const dnsCache = new Map();
   const domains = Array.from(domainSet);
+  const dnsStart = Date.now();
   await runPool(domains, async (d) => {
-    try {
-      const res = await dns.lookup(d, { family: 4 });
-      dnsCache.set(d, res.address);
-    } catch(e) {
-      dnsCache.set(d, null);
-    }
+    const ip = await resolveA(d);
+    dnsCache.set(d, ip);
   }, DNS_CONCURRENCY);
-
-  console.log(`DNS 预解析完成 (命中率: ${Array.from(dnsCache.values()).filter(Boolean).length} / ${domains.length})`);
+  const resolvedCount = Array.from(dnsCache.values()).filter(Boolean).length;
+  console.log(`DNS 预解析完成: ${resolvedCount} / ${domains.length} (耗时 ${Math.round((Date.now() - dnsStart) / 1000)}s)`);
 
   console.log(`\n=== [3/4] 启动 ${TCP_CONCURRENCY} 并发 IP 直接拨测探活 ===`);
   const probeTasks = parsed.map(item => {
