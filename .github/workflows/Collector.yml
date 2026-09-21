@@ -9,23 +9,26 @@ permissions:
   contents: write
 
 jobs:
-  probe:
-    name: Probe & Filter
+  run:
+    name: Probe & Distribute
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-      - name: Run Multi-Exit Probe Engine
+
+      - name: Run Fast Prober
         run: |
-          chmod +x engine.js
-          node engine.js
-      - name: Commit & Push Distribution
+          chmod +x probe.js
+          node probe.js
+
+      - name: Commit & Push Output
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add all_exit.json all_exit.txt all_exit_base64.txt Eternity Eternity.txt dist/ summary.json
+          git add all_exit.json all_exit.txt all_exit_base64.txt high_speed.txt Eternity Eternity.txt dist/ summary.json
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else

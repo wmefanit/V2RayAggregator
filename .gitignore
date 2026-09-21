@@ -4,3 +4,7 @@ subconverter.tar.gz
 lite
 lite.gz
 *.log
+out.json
+nodes.txt
+speedtest.log
+dist/
