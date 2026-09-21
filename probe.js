@@ -98,7 +98,7 @@ const IP_PORT_REGEX = /^(\d{1,3}(?:\.\d{1,3}){3}):(\d{1,5})$/;
 
 function extractAllCandidates(text, defaultType = 'http') {
   const list = [];
-  for (const raw of maybeBase64Decode(text).split(/[\r\n]+/)) {
+  for (const raw of maybeBase64Decode(text).replace(/\r/g, '').split('\n')) {
     const line = raw.trim();
     if (!line || line.startsWith('#') || line.startsWith('//')) continue;
     if (/^(vmess|vless|trojan|ss|ssr|socks5|socks4|http|https):\/\//i.test(line)) { list.push(line); continue; }
