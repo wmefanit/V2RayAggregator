@@ -1,4 +1,30 @@
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpyU2VZY2lnX1hCeThxM2szM05wSzNB@94.249.187.46:1080#%F0%9F%87%A9%F0%9F%87%AADE-94.249.187.46-1902
-ss://YWVzLTI1Ni1nY206WEtGS2wyclVMaklwNzQ=@185.226.172.8:8008#%F0%9F%87%A9%F0%9F%87%AADE-185.226.172.8-0370
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpQV3BqUG8zdHFoUE40eVJa@8.209.74.72:20001#%F0%9F%87%A9%F0%9F%87%AADE-8.209.74.72-0179
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNToxaGhycXJva2ozYWc=@209.46.102.22:8388#%F0%9F%87%A9%F0%9F%87%AADE-209.46.102.22-1209
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpHdnNqUTBPWjVuR1FYREdmemZXWmY1@212.227.146.33:443# By EbraSha 🔌
+ss://YWVzLTI1Ni1nY206TFhjaExzSXd0Q2VVQVVndQ==@149.102.149.207:443# By EbraSha 🔋
+ss://YWVzLTI1Ni1nY206TFhjaExzSXd0Q2VVQVVndQ==@149.102.149.207:80# By EbraSha 🌑
+ss://83a85a41-fb7f-43e0-9c15-d199509a9624@178.162.244.224:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 🛡️
+ss://784646e5-8e84-4672-8670-efc9cafcd2cc@212.95.34.5:443/?type=ws&amp;encryption=none&amp;flow=&amp;path=%2F&amp;security=tls&amp;allowInsecure=1# By EbraSha 🕷️
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpJWGEzeWx6U19qQk9Bc1F5MDcxdElR@94.249.187.46:1080# By EbraSha 🛸
+ss://YWVzLTI1Ni1nY206UmV4bkJnVTdFVjVBRHhH@213.202.208.199:7001# By EbraSha ♠️
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpFNGd5SGtLd0pHeUc=@161.97.66.81:443# By EbraSha 🕹️
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpJWGEzeWx6U19qQk9Bc1F5MDcxdElR@5.75.192.44:1080# By EbraSha 🧲
+ss://9ffcb940-cbf9-43ef-a077-20e26b2bde8c@ger.motorbazan.com:2087?security=none&encryption=none&host=play.google.com%2F%3FBIA_TELEGRAM%40MARAMBASHI_MARAMBASHI_MARAMBASHI_MARAMBASHI&headerType=http&type=tcp# By EbraSha 🧿
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0cHVXdkFRdGpkLU12dms4MWw3T0xn@cdn-2d12.giftcardbazarbot.com:8243# By EbraSha 🌐
+ss://13201185-edb3-40ed-a92d-ded4c2514854@ak2.vpnfreedom.tech:443?security=reality&amp;encryption=none&amp;pbk=l0saUZNgojrR6PjhL_fMHEBZlZ2TJypjRdQyy2mrFFI&amp;headerType=none&amp;fp=firefox&amp;spx=%2F&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=google.com&amp;sid=58# By EbraSha 👾
+ss://MjAyMi1ibGFrZTMtYWVzLTI1Ni1nY206cFo0K1p1c2FnaG9rc0NVUjc1TDJUVlEwekZQdWdXd2dwdURweVh6eG1jYz06VC9BVXMvcHdNM0FkcXdYbG4wclAwWWlKdDdlcU0rZ0huVUFsVUpsUWFEQT0=@188.34.194.165:80# By EbraSha 🔮
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTplcHQyVjZ5YXJXemF6WlN0TXUwQ3FNLWp4M05OMndHMA@jgzt1997.qivfelo.ir:5052# By EbraSha 🪐
+ss://69d8dc73-20ff-4241-bdd8-a9d6d07553b6@91.107.179.8:15003?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp# By EbraSha 🧊
+ss://88b9da00-7a25-45ec-859b-14ad57a6bd2b@91.99.179.203:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 🚀
+ss://8db764be-f144-4df0-ae5d-21d5f2551290@md.gilangard.ir:11431?security=reality&amp;encryption=none&amp;pbk=-mmOMxUx52Rj14VuE5fhlsvh7qt5WT9WEZy5LQlnSDc&amp;headerType=none&amp;fp=qq&amp;type=tcp&amp;sni=play.google.com&amp;sid=d8de8785395c206b# By EbraSha 🌪️
+ss://9f44d517-29f2-4c6d-cc06-a1268f13da58@host.taghvimtime.ir:8443?mode=auto&amp;path=%2FMeh%3Fdi%3D443&amp;security=tls&amp;alpn=h2&amp;encryption=none&amp;extra=%7B%22scMaxBufferedPosts%22%3A30%2C%22scMaxEachPostBytes%22%3A%221000000%22%2C%22scStreamUpServerSecs%22%3A%2220-80%22%2C%22xPaddingBytes%22%3A%22100-1000%22%2C%22scMinPostsIntervalMs%22%3A%2230%22%2C%22xmux%22%3A%7B%22maxConcurrency%22%3A%2216-32%22%2C%22maxConnections%22%3A0%2C%22cMaxReuseTimes%22%3A0%2C%22hMaxRequestTimes%22%3A%22600-900%22%2C%22hMaxReusableSecs%22%3A%221800-3000%22%2C%22hKeepAlivePeriod%22%3A0%7D%7D&amp;insecure=0&amp;host=host.taghvimtime.ir&amp;fp=chrome&amp;type=xhttp&amp;allowInsecure=0&amp;sni=host.taghvimtime.ir# By EbraSha 📼
+ss://CONFIG-WANCLOUDFA@49.12.64.220:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp# By EbraSha 📛
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprZ19ubklCX1RmYXM2Y1VES0R5eWpxZmMzN08wOHczXw@91.107.178.93:22383# By EbraSha 🕷️
+ss://MjAyMi1ibGFrZTMtYWVzLTEyOC1nY206MUp2bG10VDR2OHkxeUdjekR0VDZXdz09OmFDdHBlTWlldEdzSlk1MGg2akRXNnc9PQ@dopr.rehan-iogsar.ir:4680# By EbraSha 🦂
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo3cEdnLW1aenBvS1JONVRZUGc4STJR@cdn-2d12.giftcardbazarbot.com:8243# By EbraSha 🥷
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo5NGR2b1cwVGRLUnE=@161.97.68.139:443# By EbraSha 🎛️
+ss://0f7e89d6-9f35-4e94-ba4b-509a724dc177@91.99.233.77:443?mode=auto&amp;path=%2Fds&amp;security=none&amp;encryption=none&amp;type=xhttp# By EbraSha 🦈
+ss://153ee04c-dcc1-4ef8-a146-8fb31cec1f48@91.99.192.185:443?security=none&amp;encryption=none&amp;host=zula.ir&amp;headerType=http&amp;type=tcp# By EbraSha 🛡️
+ss://1c3b5f09-d3f4-44cc-adfc-5d74a71d33f2@91.107.240.177:443?security=none&amp;encryption=none&amp;headerType=none&amp;type=tcp# By EbraSha 🔥
+ss://564397f8-4805-4433-ab5b-a24aa133bac2@104.167.24.21:443?encryption=none&security=reality&sni=hub.oneoknews.com&fp=firefox&pbk=KJoHsAShwQt-FYE2OGEekwDbeeYe-S1A0YBU8W5uYGc&sid=064c2d37308aeeb6&allowinsecure=0&type=grpc&mode=gun&authority=&serviceName=api.v1.StreamService# By EbraSha ♦️
+ss://3a5a2bfd-97d5-4a35-bd9f-abb117b79f40@de9.bexait.ir:2434?security=reality&amp;encryption=none&amp;pbk=yzCvRpbQ-cRePaJAuQkw42_xEf-R860gFsQwoPki2E0&amp;headerType=none&amp;fp=chrome&amp;type=tcp&amp;sni=icloud.com&amp;sid=9de041877612a718# By EbraSha 🌀
+ss://3c37d31e-9990-4c52-80fa-d971564d58c1@49.12.237.71:443?path=%2F%3Fu%3D73742dbc12&security=tls&encryption=none&insecure=0&host=nova-atlas-core-609c.nova-c40b57.workers.dev&fp=chrome&type=ws&allowInsecure=0&sni=nova-atlas-core-609c.nova-c40b57.workers.dev# By EbraSha 🚧
+ss://440766d1-858f-4719-84f5-c2de6f6227ba@65.108.231.185:443?security=tls&amp;alpn=h3%2Ch2%2Chttp%2F1.1&amp;encryption=none&amp;headerType=none&amp;type=tcp&amp;sni=local.rogsoftwaregroup.com# By EbraSha ✨
