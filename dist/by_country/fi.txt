@@ -1,6 +1,5 @@
-ss://awlix_ir@87.58.159.20:443?encryption=mlkem768x25519plus.native.0rtt.CCIZgZeeCX8na60UXi9II-iduj3OFxtj-fuh_4AWiUU&amp;security=none&amp;type=tcp#awlix_ir
 vless://awlix_ir@87.58.159.20:443?encryption=mlkem768x25519plus.native.0rtt.CCIZgZeeCX8na60UXi9II-iduj3OFxtj-fuh_4AWiUU&amp;security=none&amp;type=tcp#awlix_ir
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpWMjlCcGJ0a2hXWnI@185.204.1.253:443# By EbraSha 🔐
+ss://awlix_ir@87.58.159.20:443?encryption=mlkem768x25519plus.native.0rtt.CCIZgZeeCX8na60UXi9II-iduj3OFxtj-fuh_4AWiUU&amp;security=none&amp;type=tcp#awlix_ir
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpWMjlCcGJ0a2hXWnI@185.204.1.253:443# By EbraSha 🌑
 ss://YWVzLTI1Ni1nY206cmcwZzN4cDlyazluazlvMA@87.58.148.70:443#%40FreeLand8%F0%9F%94%A5
-http://85.209.156.148:1080
 ss://YWVzLTI1Ni1nY206cmcwZzN4cDlyazluazlvMA@87.58.148.70:443#🇫🇮[openproxylist.com] ss-FI

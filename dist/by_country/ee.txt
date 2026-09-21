@@ -1,23 +1,23 @@
 http://146.19.49.195:1080
 socks5://146.19.49.195:1080
 socks5://194.61.120.238:1080
+socks5://178.18.147.109:9050
+ss://1f4c983e-382c-d2fa-b2dc-7981f02b34de@62.60.155.0:443?security=reality&encryption=none&pbk=YD3G553bQP0uWuyYDY9ZvhLCmfF9tmKUo8MRuALEFUw&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=telegraph.co.uk&sid=deee73# By EbraSha 🌑
+ss://c5694dc5-39fd-4a92-8430-3837baa522a3@45.95.96.236:443?security=reality&amp;encryption=none&amp;pbk=rCkSHJ7goy7ZvSlau4LfXF-QLloOJMNeMxpeeQtwtVs&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=gesmankos.sadiepinki.com&amp;sid=4fa44664f6a566d3#%40FreeLand8%20%F0%9F%87%A9%F0%9F%87%AA%F0%9F%94%A5
 vless://c5694dc5-39fd-4a92-8430-3837baa522a3@45.95.96.236:443?pbk=rCkSHJ7goy7ZvSlau4LfXF-QLloOJMNeMxpeeQtwtVs&fp=chrome&headerType=none&sid=4fa44664f6a566d3&flow=xtls-rprx-vision&sni=gesmankos.sadiepinki.com&type=tcp&security=reality&encryption=none#🇩🇪[openproxylist.com] vless-DE
 vless://c5694dc5-39fd-4a92-8430-3837baa522a3@45.95.96.236:443?security=reality&amp;encryption=none&amp;pbk=rCkSHJ7goy7ZvSlau4LfXF-QLloOJMNeMxpeeQtwtVs&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=gesmankos.sadiepinki.com&amp;sid=4fa44664f6a566d3#%40FreeLand8%20%F0%9F%87%A9%F0%9F%87%AA%F0%9F%94%A5
-ss://c5694dc5-39fd-4a92-8430-3837baa522a3@45.95.96.236:443?security=reality&amp;encryption=none&amp;pbk=rCkSHJ7goy7ZvSlau4LfXF-QLloOJMNeMxpeeQtwtVs&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=gesmankos.sadiepinki.com&amp;sid=4fa44664f6a566d3#%40FreeLand8%20%F0%9F%87%A9%F0%9F%87%AA%F0%9F%94%A5
-ss://1f4c983e-382c-d2fa-b2dc-7981f02b34de@62.60.155.0:443?security=reality&encryption=none&pbk=YD3G553bQP0uWuyYDY9ZvhLCmfF9tmKUo8MRuALEFUw&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=telegraph.co.uk&sid=deee73# By EbraSha 🤖
 socks5://88.218.206.170:5432
-http://37.49.224.167:1080
-http://5.45.126.128:8080
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0dW5uZWwtYXN0cm92cG5fb2ZmaWNpYWxfZWU=@ee-1.stunnel.cc:8444# By EbraSha 🌑
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0dW5uZWwtYXN0cm92cG5fb2ZmaWNpYWxfZWU@ee-1.stunnel.cc:8444# By EbraSha 🧩
-socks5://146.19.143.200:1080
-socks5://88.218.206.170:22
 socks5://132.243.168.30:9150
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpmOGY3YUN6Y1BLYnNGOHAz@188.214.36.155:990# By EbraSha 🎯
+socks5://88.218.206.170:22
+ss://9f2f92ed-3ed2-4ef3-88e4-c12c5be53b1a@files.toriva.click:443?security=tls&amp;alpn=http%2F1.1&amp;encryption=mlkem768x25519plus.native.0rtt.xiVmE3k1gSJhST4Uf6szW_l5NSQA32CYkZZH-9r0fDY&amp;insecure=0&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;allowInsecure=0&amp;sni=files.toriva.click# By EbraSha 🚨
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0dW5uZWwtYXN0cm92cG5fb2ZmaWNpYWxfZWU=@ee-1.stunnel.cc:8444# By EbraSha 🗿
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpmOGY3YUN6Y1BLYnNGOHAz@188.214.36.155:990# By EbraSha ⛓️
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp0dW5uZWwtYXN0cm92cG5fb2ZmaWNpYWxfZWU@ee-1.stunnel.cc:8444# By EbraSha 👑
+http://5.45.126.128:8080
 vless://9f2f92ed-3ed2-4ef3-88e4-c12c5be53b1a@files.toriva.click:443?security=tls&amp;alpn=http%2F1.1&amp;encryption=mlkem768x25519plus.native.0rtt.xiVmE3k1gSJhST4Uf6szW_l5NSQA32CYkZZH-9r0fDY&amp;insecure=0&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;allowInsecure=0&amp;sni=files.toriva.click#@v2rayng3
-ss://9f2f92ed-3ed2-4ef3-88e4-c12c5be53b1a@files.toriva.click:443?security=tls&amp;alpn=http%2F1.1&amp;encryption=mlkem768x25519plus.native.0rtt.xiVmE3k1gSJhST4Uf6szW_l5NSQA32CYkZZH-9r0fDY&amp;insecure=0&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;allowInsecure=0&amp;sni=files.toriva.click# By EbraSha 🌀
 ss://9f2f92ed-3ed2-4ef3-88e4-c12c5be53b1a@files.toriva.click:443?security=tls&amp;alpn=http%2F1.1&amp;encryption=mlkem768x25519plus.native.0rtt.xiVmE3k1gSJhST4Uf6szW_l5NSQA32CYkZZH-9r0fDY&amp;insecure=0&amp;headerType=none&amp;fp=firefox&amp;type=tcp&amp;allowInsecure=0&amp;sni=files.toriva.click#@v2rayng3
-socks5://171.22.182.164:1080
 vless://c5694dc5-39fd-4a92-8430-3837baa522a3@pl.bubahero.com:443?security=reality&amp;encryption=none&amp;pbk=GmZv3anSeAeHr_cMFKr-6MPLli-nyKNatnY6P3AFK00&amp;headerType=none&amp;fp=chrome&amp;spx=%2F&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=pl.bubahero.com&amp;sid=9c2378562188c3cb#%F0%9F%87%B5%F0%9F%87%B1%40FreakConfig
-http://37.49.224.243:1080
+socks5://5.45.119.70:1080
+socks5://171.22.182.164:1080
 ss://c5694dc5-39fd-4a92-8430-3837baa522a3@pl.bubahero.com:443?security=reality&amp;encryption=none&amp;pbk=GmZv3anSeAeHr_cMFKr-6MPLli-nyKNatnY6P3AFK00&amp;headerType=none&amp;fp=chrome&amp;spx=%2F&amp;type=tcp&amp;flow=xtls-rprx-vision&amp;sni=pl.bubahero.com&amp;sid=9c2378562188c3cb#%F0%9F%87%B5%F0%9F%87%B1%40FreakConfig
+socks5://146.19.143.200:1080
