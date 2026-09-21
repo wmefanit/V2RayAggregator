@@ -19,11 +19,13 @@ permissions:
 
 jobs:
   run:
-    name: Million Prober & Distribute
+    name: Million Prober & Release Distribute
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
 
       - name: Setup Node.js Runtime
         uses: actions/setup-node@v4
@@ -45,14 +47,58 @@ jobs:
         run: |
           node probe.js "$SOURCES_FILE"
 
-      - name: Commit & Push Multi-Exit Feeds
+      - name: Package Country & Protocol Archives
         run: |
-          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add -A all_exit.json all_exit.txt all_exit_meta.txt all_exit_base64.txt high_speed.txt Eternity Eternity.txt dist/ summary.json
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Million Multi-Exit Pool Updated"
-            git push origin master
+          if [ -d "dist/by_country" ]; then
+            tar -czf dist_country.tar.gz -C dist by_country
           fi
+          if [ -d "dist/by_protocol" ]; then
+            tar -czf dist_protocol.tar.gz -C dist by_protocol
+          fi
+
+      - name: Publish / Overwrite GitHub Release (Zero Git Repo Bloat)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          NOW=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          ALIVE_COUNT=$(grep -c '^[a-zA-Z0-9]' all_exit.txt 2>/dev/null || echo "0")
+          
+          # 创建 Release Notes
+          cat << EOF > release_notes.md
+          ## 🚀 Million-Scale Multi-Exit Proxy Pool (Auto-Updated)
+          
+          - **Last Updated**: \`${NOW}\`
+          - **Alive Proxy Count**: \`${ALIVE_COUNT}\` Verified Active Nodes
+          - **Update Frequency**: Every 6 Hours (00:00, 06:00, 12:00, 18:00 UTC)
+          - **Verification Method**: High-concurrency TCP live handshake + Offline ASN database geolocation
+          
+          ### 📥 Direct Subscription & Download Links:
+          - **Full Multi-Exit Pool (200k+ Nodes)**: [\`all_exit.txt\`](https://github.com/${{ github.repository }}/releases/download/latest/all_exit.txt)
+          - **Full Pool with Geo & Latency Meta**: [\`all_exit_meta.txt\`](https://github.com/${{ github.repository }}/releases/download/latest/all_exit_meta.txt)
+          - **High-Speed Top 500 Pool**: [\`high_speed.txt\`](https://github.com/${{ github.repository }}/releases/download/latest/high_speed.txt)
+          - **Base64 Subscription**: [\`Eternity.txt\`](https://github.com/${{ github.repository }}/releases/download/latest/Eternity.txt)
+          - **Summary Metrics**: [\`summary.json\`](https://github.com/${{ github.repository }}/releases/download/latest/summary.json)
+          - **Country Bundles (150+ Countries)**: [\`dist_country.tar.gz\`](https://github.com/${{ github.repository }}/releases/download/latest/dist_country.tar.gz)
+          EOF
+
+          # 首次运行创建 Release，之后每次覆盖资产（Git 仓库零增长）
+          gh release view latest >/dev/null 2>&1 \
+            || gh release create latest --target master \
+                 --title "Latest Multi-Exit Proxy Pool" \
+                 --notes-file release_notes.md
+
+          gh release upload latest \
+            all_exit.txt \
+            all_exit_meta.txt \
+            all_exit_base64.txt \
+            high_speed.txt \
+            Eternity.txt \
+            summary.json \
+            dist_country.tar.gz \
+            dist_protocol.tar.gz \
+            --clobber
+
+          gh release edit latest \
+            --title "Latest Multi-Exit Proxy Pool (${NOW})" \
+            --notes-file release_notes.md

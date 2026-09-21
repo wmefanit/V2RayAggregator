@@ -8,3 +8,11 @@ out.json
 nodes.txt
 speedtest.log
 candidates.txt
+all_exit*.txt
+all_exit.json
+high_speed.txt
+Eternity*
+summary.json
+dist/
+dist_*.tar.gz
+release_notes.md
