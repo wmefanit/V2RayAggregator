@@ -10,7 +10,7 @@ on:
       max_candidates:
         description: '最大探测候选数 (0 = 不限/全量百万)'
         required: false
-        default: '5000'
+        default: '10000'
   schedule:
     - cron: "0 */6 * * *"
 
@@ -31,7 +31,7 @@ jobs:
       - name: Run Cloud Prober
         env:
           SOURCES_FILE: ${{ github.event.inputs.sources_file || 'sub/sample_sources.json' }}
-          MAX_CANDIDATES: ${{ github.event.inputs.max_candidates || '5000' }}
+          MAX_CANDIDATES: ${{ github.event.inputs.max_candidates || '10000' }}
           TCP_CONCURRENCY: "500"
           DNS_CONCURRENCY: "200"
           TCP_TIMEOUT_MS: "2000"
@@ -42,7 +42,7 @@ jobs:
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add -A all_exit.json all_exit.txt all_exit_base64.txt high_speed.txt Eternity Eternity.txt dist/ summary.json 2>/dev/null || true
+          git add -A all_exit.json all_exit.txt all_exit_meta.txt all_exit_base64.txt high_speed.txt Eternity Eternity.txt dist/ summary.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
