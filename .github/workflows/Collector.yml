@@ -2,6 +2,11 @@ name: Fast Multi-Exit Prober
 
 on:
   workflow_dispatch:
+    inputs:
+      sources_file:
+        description: '源清单文件 (sub/sample_sources.json 或 sub/all_sources.json)'
+        required: false
+        default: 'sub/sample_sources.json'
   schedule:
     - cron: "0 */6 * * *"
 
@@ -19,19 +24,20 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Run Fast Prober
+      - name: Run Prober
         run: |
-          chmod +x probe.js
-          node probe.js
+          SRC="${{ github.event.inputs.sources_file || 'sub/sample_sources.json' }}"
+          echo "使用源清单: $SRC"
+          node probe.js "$SRC"
 
       - name: Commit & Push Output
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add all_exit.json all_exit.txt all_exit_base64.txt high_speed.txt Eternity Eternity.txt dist/ summary.json
+          git add -A all_exit.json all_exit.txt all_exit_base64.txt high_speed.txt Eternity Eternity.txt dist/ summary.json 2>/dev/null || true
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Multi-Exit & Speed Probed"
+            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Probed"
             git push origin master
           fi

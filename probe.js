@@ -7,10 +7,10 @@ const http = require('http');
 const net = require('net');
 const url = require('url');
 
-const SUB_LIST_PATH = './sub/sub_list.json';
+const ALL_SOURCES_PATH = process.argv[2] || process.env.SOURCES_FILE || './sub/sample_sources.json';
 const OUT_DIR = './dist';
-const TCP_CONCURRENCY = 500;
-const TCP_TIMEOUT_MS = 2500;
+const TCP_CONCURRENCY = 1000;
+const TCP_TIMEOUT_MS = 2000;
 
 function fetchText(targetUrl, timeoutMs = 15000, redirects = 3) {
   return new Promise((resolve) => {
@@ -37,28 +37,45 @@ function fetchText(targetUrl, timeoutMs = 15000, redirects = 3) {
 
 function maybeBase64Decode(text) {
   const t = text.trim();
-  if (!t || t.includes('://')) return text;
+  if (!t || t.includes('://') || t.includes(':')) return text;
   for (const enc of ['base64', 'base64url']) {
     try {
       const d = Buffer.from(t, enc).toString('utf8');
-      if (d.includes('://')) return d;
+      if (d.includes('://') || d.includes(':')) return d;
     } catch (e) {}
   }
   return text;
 }
 
-function extractLinks(text) {
-  const out = [];
-  for (const raw of maybeBase64Decode(text).split(/[\r\n]+/)) {
+// 支持提取 IP:Port 以及各类代理 URL
+const IP_PORT_REGEX = /^(\d{1,3}(?:\.\d{1,3}){3}):(\d{1,5})$/;
+
+function extractAllCandidates(text, defaultType = 'http') {
+  const list = [];
+  const lines = maybeBase64Decode(text).split(/[\r\n]+/);
+  for (const raw of lines) {
     const line = raw.trim();
-    if (/^(vmess|vless|trojan|ss|ssr):\/\//i.test(line)) {
-      out.push(line);
+    if (!line || line.startsWith('#') || line.startsWith('//')) continue;
+
+    // 1. 协议 URL (vmess, ss, trojan, vless, socks5, http)
+    if (/^(vmess|vless|trojan|ss|ssr|socks5|socks4|http|https):\/\//i.test(line)) {
+      list.push(line);
+      continue;
+    }
+
+    // 2. 纯 IP:Port 格式 (如 1.2.3.4:8080)
+    const m = line.match(IP_PORT_REGEX);
+    if (m) {
+      const port = parseInt(m[2], 10);
+      if (port > 0 && port < 65536) {
+        list.push(`${defaultType}://${m[1]}:${port}`);
+      }
     }
   }
-  return out;
+  return list;
 }
 
-function parseEndpoint(link) {
+function parseHostPort(link) {
   try {
     const proto = link.slice(0, link.indexOf('://')).toLowerCase();
     if (proto === 'vmess') {
@@ -144,34 +161,48 @@ async function runPool(items, worker, concurrency) {
 
 async function main() {
   const t0 = Date.now();
-  console.log('=== [1/3] 抓取并合并 18 个订阅源 ===');
+  console.log('=== [1/3] 云端全量抓取 62 个数据源 (124 条 URL 规则) ===');
 
-  if (!fs.existsSync(SUB_LIST_PATH)) {
-    console.error('sub_list.json 不存在');
-    process.exit(1);
+  const catalog = JSON.parse(fs.readFileSync(ALL_SOURCES_PATH, 'utf8'));
+  const taskUrls = [];
+  for (const src of (catalog.sources || [])) {
+    if (src.enabled === false) continue;
+    for (const u of (src.urls || [])) {
+      if (u.url) {
+        taskUrls.push({ name: src.name, parser: src.parser, type: u.type || 'http', url: u.url });
+      }
+    }
   }
 
-  const subList = JSON.parse(fs.readFileSync(SUB_LIST_PATH, 'utf8')).filter(s => s.enabled && s.url);
-  const fetched = await runPool(subList, async (s) => {
-    const txt = await fetchText(s.url);
-    const links = extractLinks(txt);
-    console.log(`  - ${s.remarks}: 抓取到 ${links.length} 个节点`);
-    return links;
-  }, 8);
+  console.log(`有效待抓取 URL 任务数: ${taskUrls.length}`);
 
-  const rawLinks = Array.from(new Set(fetched.flat()));
-  console.log(`\n全网抓取去重后节点总数: ${rawLinks.length}`);
+  const fetched = await runPool(taskUrls, async (t) => {
+    const txt = await fetchText(t.url);
+    const cands = extractAllCandidates(txt, t.type);
+    console.log(`  - [${t.name}] (${t.type}) -> ${cands.length} 候选`);
+    return cands;
+  }, 16);
 
-  console.log(`\n=== [2/3] 端点解析与 ${TCP_CONCURRENCY} 并发 TCP 拨号探活 ===`);
-  const parsed = rawLinks.map(l => ({ link: l, ep: parseEndpoint(l) })).filter(x => x.ep && x.ep.port > 0 && x.ep.port < 65536);
-  console.log(`成功提取端点: ${parsed.length} / ${rawLinks.length}`);
+  const rawSet = new Set(fetched.flat());
+  const rawList = Array.from(rawSet);
+  console.log(`\n🎉 百万池去重后全量候选总数: ${rawList.length}`);
+
+  console.log(`\n=== [2/3] 全量端点解析与 ${TCP_CONCURRENCY} 并发云端探活 ===`);
+  const parsed = [];
+  for (const link of rawList) {
+    const ep = parseHostPort(link);
+    if (ep && ep.port > 0 && ep.port < 65536) {
+      parsed.push({ link, ep });
+    }
+  }
+  console.log(`可有效拨号端点数: ${parsed.length} / ${rawList.length}`);
 
   let checkedCount = 0;
   const probed = await runPool(parsed, async (item) => {
     const rtt = await tcpProbe(item.ep.host, item.ep.port);
     checkedCount++;
-    if (checkedCount % 5000 === 0) {
-      console.log(`  探活进度: ${checkedCount} / ${parsed.length} ...`);
+    if (checkedCount % 20000 === 0) {
+      console.log(`  已拨号: ${checkedCount} / ${parsed.length} ...`);
     }
     if (rtt !== null) {
       return {
@@ -188,12 +219,11 @@ async function main() {
   }, TCP_CONCURRENCY);
 
   const alive = probed.filter(Boolean);
-  console.log(`\n探活完成: 存活可用节点 ${alive.length} / ${parsed.length} (耗时: ${Math.round((Date.now() - t0) / 1000)}s)`);
+  console.log(`\n探活完成: 存活可用节点数 ${alive.length} / ${parsed.length} (耗时: ${Math.round((Date.now() - t0) / 1000)}s)`);
 
-  // 按 RTT 排序
   alive.sort((a, b) => a.rtt_ms - b.rtt_ms);
 
-  console.log('\n=== [3/3] 生成多场景分流订阅产物 ===');
+  console.log('\n=== [3/3] 产出多维度百万级清洗订阅 ===');
   fs.mkdirSync(path.join(OUT_DIR, 'by_country'), { recursive: true });
   fs.mkdirSync(path.join(OUT_DIR, 'by_protocol'), { recursive: true });
 
@@ -207,31 +237,31 @@ async function main() {
     protoMap[n.proto].push(n.link);
   }
 
-  // 1. 全量存活多出口池 (按国家与延迟结构化)
+  // 1. 全量多出口存活池
   fs.writeFileSync('all_exit.json', JSON.stringify(alive, null, 2));
   fs.writeFileSync('all_exit.txt', alive.map(n => n.link).join('\n'));
   fs.writeFileSync('all_exit_base64.txt', Buffer.from(alive.map(n => n.link).join('\n')).toString('base64'));
 
-  // 2. 高质量/低延迟精选池 (Top 100)
-  const topFast = alive.slice(0, 100);
+  // 2. 低延迟优质池 (Top 200)
+  const topFast = alive.slice(0, 200);
   fs.writeFileSync('high_speed.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity', Buffer.from(topFast.map(n => n.link).join('\n')).toString('base64'));
 
-  // 3. 国别分流订阅
+  // 3. 国别分流
   for (const [c, links] of Object.entries(countryMap)) {
     fs.writeFileSync(path.join(OUT_DIR, 'by_country', `${c.toLowerCase()}.txt`), links.join('\n'));
   }
 
-  // 4. 协议分流订阅
+  // 4. 协议分流
   for (const [p, links] of Object.entries(protoMap)) {
     fs.writeFileSync(path.join(OUT_DIR, 'by_protocol', `${p.toLowerCase()}.txt`), links.join('\n'));
   }
 
-  // 5. 总体健康报告
+  // 5. 总体报表
   const summary = {
     updated_at: new Date().toISOString(),
-    total_raw_nodes: rawLinks.length,
+    total_raw_candidates: rawList.length,
     valid_endpoints: parsed.length,
     alive_nodes: alive.length,
     top_fast_nodes: topFast.length,
@@ -241,11 +271,10 @@ async function main() {
   };
   fs.writeFileSync('summary.json', JSON.stringify(summary, null, 2));
 
-  console.log('🎉 全部订阅产物生成完毕！');
-  console.log(`- all_exit.txt: ${alive.length} 节点 (全量多出口备选池)`);
-  console.log(`- high_speed.txt / Eternity.txt: ${topFast.length} 节点 (低延迟精选池)`);
+  console.log('🎉 百万池云端清洗完成！');
+  console.log(`- all_exit.txt: ${alive.length} 节点 (全量多出口池)`);
+  console.log(`- high_speed.txt: ${topFast.length} 节点 (低延迟精选)`);
   console.log(`- dist/by_country/: ${Object.keys(countryMap).length} 个国家地区分流`);
-  console.log(`- dist/by_protocol/: ${Object.keys(protoMap).length} 个协议分流`);
 }
 
 main().catch(e => {
