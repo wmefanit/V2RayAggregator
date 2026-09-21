@@ -10,21 +10,11 @@ const url = require('url');
 
 const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/sample_sources.json';
 const OUT_DIR = './dist';
-const TCP_CONCURRENCY = parseInt(process.env.TCP_CONCURRENCY || '500', 10);
-const DNS_CONCURRENCY = parseInt(process.env.DNS_CONCURRENCY || '200', 10);
-const DNS_TIMEOUT_MS = parseInt(process.env.DNS_TIMEOUT_MS || '5000', 10);
-const TCP_TIMEOUT_MS = parseInt(process.env.TCP_TIMEOUT_MS || '2000', 10);
-// 0 = 不限制；小样本验证用上限控制规模
-const MAX_PER_SOURCE = parseInt(process.env.MAX_PER_SOURCE || '0', 10);
-const MAX_CANDIDATES = parseInt(process.env.MAX_CANDIDATES || '0', 10);
-
-// 用 c-ares（dns.resolve4）纯异步解析，避免 dns.lookup 走 libuv 4 线程池卡死
-function resolveA(host) {
-  return Promise.race([
-    dns.resolve4(host).then((ips) => (Array.isArray(ips) && ips[0]) || null).catch(() => null),
-    new Promise((r) => setTimeout(() => r(null), DNS_TIMEOUT_MS)),
-  ]);
-}
+const CHUNK_SIZE = 10000;
+const TCP_CONCURRENCY = 500;
+const DNS_CONCURRENCY = 200;
+const TCP_TIMEOUT_MS = 2000;
+const MAX_CANDIDATES = parseInt(process.env.MAX_CANDIDATES || '15000', 10);
 
 function fetchText(targetUrl, timeoutMs = 15000, redirects = 3) {
   return new Promise((resolve) => {
@@ -124,15 +114,42 @@ function parseHostPort(link) {
   }
 }
 
-const COUNTRY_REGEX = /(HK|TW|JP|US|SG|KR|UK|GB|DE|CA|FR|RU|IN|AU|NL|SE|IT|ES|BR|ID|MY|VN|TH|TR|PH)/i;
+// 严谨的国家代码识别：避免误伤单词内部字符
+const COUNTRY_FLAGS = {
+  '\uD83C\uDDEF\uD83C\uDDF5': 'JP', '\uD83C\uDDFA\uD83C\uDDF8': 'US', '\uD83C\uDDED\uD83C\uDDF0': 'HK',
+  '\uD83C\uDDF8\uD83C\uDDEC': 'SG', '\uD83C\uDDF9\uD83C\uDDFC': 'TW', '\uD83C\uDDF0\uD83C\uDDF7': 'KR',
+  '\uD83C\uDDEC\uD83C\uDDE7': 'GB', '\uD83C\uDDE9\uD83C\uDDEA': 'DE', '\uD83C\uDDE8\uD83C\uDDE6': 'CA',
+  '\uD83C\uDDEB\uD83C\uDDF7': 'FR', '\uD83C\uDDF3\uD83C\uDDF1': 'NL', '\uD83C\uDDF7\uD83C\uDDFA': 'RU'
+};
+
+const COUNTRY_EXACT_REGEX = /\b(HK|TW|JP|US|SG|KR|UK|GB|DE|CA|FR|RU|IN|AU|NL|SE|IT|ES|BR|ID|MY|VN|TH|TR|PH)\b|(?:\[(HK|TW|JP|US|SG|KR|UK|GB|DE|CA|FR|RU|IN|AU|NL|SE|IT|ES|BR|ID|MY|VN|TH|TR|PH)\])|(?:-(HK|TW|JP|US|SG|KR|UK|GB|DE|CA|FR|RU|IN|AU|NL|SE|IT|ES|BR|ID|MY|VN|TH|TR|PH)-)/i;
 
 function extractCountry(remark, host) {
-  const m = (remark || '').match(COUNTRY_REGEX);
+  if (!remark) return 'OTHER';
+  
+  // 1. Emoji 旗帜优先
+  for (const [flag, code] of Object.entries(COUNTRY_FLAGS)) {
+    if (remark.includes(flag)) return code;
+  }
+
+  // 2. 独立词/方括号/中划线国家码
+  const m = remark.match(COUNTRY_EXACT_REGEX);
   if (m) {
-    let c = m[1].toUpperCase();
+    let c = (m[1] || m[2] || m[3]).toUpperCase();
     if (c === 'UK') c = 'GB';
     return c;
   }
+
+  // 3. 中文国名识别
+  if (/日本|东京|大阪/i.test(remark)) return 'JP';
+  if (/香港/i.test(remark)) return 'HK';
+  if (/美国|洛杉矶|硅谷|西雅图/i.test(remark)) return 'US';
+  if (/新加坡|狮城/i.test(remark)) return 'SG';
+  if (/台湾|台北/i.test(remark)) return 'TW';
+  if (/韩国|首尔/i.test(remark)) return 'KR';
+  if (/德国|法兰克福/i.test(remark)) return 'DE';
+  if (/英国|伦敦/i.test(remark)) return 'GB';
+
   return 'OTHER';
 }
 
@@ -192,12 +209,8 @@ async function main() {
   console.log(`待抓取任务数: ${taskUrls.length}`);
   const fetched = await runPool(taskUrls, async (t) => {
     const txt = await fetchText(t.url);
-    let cands = extractAllCandidates(txt, t.type);
-    const rawCount = cands.length;
-    if (MAX_PER_SOURCE > 0 && cands.length > MAX_PER_SOURCE) {
-      cands = cands.slice(0, MAX_PER_SOURCE);
-    }
-    console.log(`  - [${t.name}] (${t.type}) -> 抓取到 ${rawCount} 条` + (cands.length !== rawCount ? `，采样取 ${cands.length}` : ''));
+    const cands = extractAllCandidates(txt, t.type);
+    console.log(`  - [${t.name}] (${t.type}) -> 抓取到 ${cands.length} 条`);
     return cands;
   }, 8);
 
@@ -213,8 +226,9 @@ async function main() {
     }
   }
   console.log(`有效格式端点: ${parsed.length} / ${rawList.length}`);
+
   if (MAX_CANDIDATES > 0 && parsed.length > MAX_CANDIDATES) {
-    console.log(`按 MAX_CANDIDATES=${MAX_CANDIDATES} 截断（原始 ${parsed.length}）`);
+    console.log(`按 MAX_CANDIDATES=${MAX_CANDIDATES} 截断处理（原始 ${parsed.length}）`);
     parsed = parsed.slice(0, MAX_CANDIDATES);
   }
 
@@ -224,14 +238,19 @@ async function main() {
   }
   console.log(`其中独立域名: ${domainSet.size}`);
 
-  // 并发纯异步 DNS 预解析（c-ares）
+  // 并发纯异步 DNS 预解析 (c-ares)
   const dnsCache = new Map();
   const domains = Array.from(domainSet);
   const dnsStart = Date.now();
   await runPool(domains, async (d) => {
-    const ip = await resolveA(d);
-    dnsCache.set(d, ip);
+    try {
+      const res = await dns.resolve4(d);
+      dnsCache.set(d, res[0] || null);
+    } catch(e) {
+      dnsCache.set(d, null);
+    }
   }, DNS_CONCURRENCY);
+
   const resolvedCount = Array.from(dnsCache.values()).filter(Boolean).length;
   console.log(`DNS 预解析完成: ${resolvedCount} / ${domains.length} (耗时 ${Math.round((Date.now() - dnsStart) / 1000)}s)`);
 
