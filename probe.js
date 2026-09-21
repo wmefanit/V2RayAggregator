@@ -179,6 +179,7 @@ function probeL7Http(ip, port, timeoutMs = 3000) {
     sock.setTimeout(timeoutMs);
     sock.once('timeout', () => finish(false));
     sock.once('error', () => finish(false));
+    sock.once('close', () => finish(false));
     sock.connect(port, ip, () => {
       // 发送 CONNECT 隧道握手 (目标 Cloudflare 204)
       sock.write('CONNECT cp.cloudflare.com:80 HTTP/1.1\r\nHost: cp.cloudflare.com:80\r\nProxy-Connection: keep-alive\r\n\r\n');
@@ -210,6 +211,7 @@ function probeL7Socks5(ip, port, timeoutMs = 3000) {
     sock.setTimeout(timeoutMs);
     sock.once('timeout', () => finish(false));
     sock.once('error', () => finish(false));
+    sock.once('close', () => finish(false));
     sock.connect(port, ip, () => {
       // SOCKS5 协商阶段 1: 认证方式选择 (NO AUTHENTICATION REQUIRED)
       sock.write(Buffer.from([0x05, 0x01, 0x00]));
@@ -366,12 +368,6 @@ async function main() {
 
       const rtt = await tcpProbe(item.ip, item.ep.port);
       if (rtt !== null) {
-        // L7 真实验活：仅对协议明确可验证的 HTTP/HTTPS/SOCKS5 做隧道握手；Xray 协议交由本地网关校验
-        let l7 = null;
-        const p = (item.ep.proto || '').toLowerCase();
-        if (p === 'http' || p === 'https' || p === 'socks5') {
-          l7 = (await probeL7(item.ep.proto, item.ip, item.ep.port)) !== null;
-        }
         return {
           link: item.link,
           proto: item.ep.proto,
@@ -384,7 +380,6 @@ async function main() {
           org: org,
           country_source: geo && geo.country ? 'asn_db' : 'remark',
           rtt_ms: rtt,
-          l7_verified: l7,
         };
       }
       return null;
@@ -399,6 +394,28 @@ async function main() {
 
   console.log(`\n探活完成: 存活可用数 ${alive.length} / ${probeTotal} (耗时: ${Math.round((Date.now() - t0) / 1000)}s)`);
   alive.sort((a, b) => a.rtt_ms - b.rtt_ms);
+
+  // === [2.5/4] 对前 2000 个低延迟候选节点执行 L7 真实验活 (HTTP CONNECT / SOCKS5) ===
+  console.log('\n=== [2.5/4] 对 Top 候选节点执行 L7 隧道真实验活 (防止 1ms 假节点霸榜) ===');
+  const l7Candidates = alive.slice(0, 2000);
+  let l7VerifiedCount = 0;
+  await runPool(l7Candidates, async (item) => {
+    const p = (item.proto || '').toLowerCase();
+    if (p === 'http' || p === 'https' || p === 'socks5') {
+      // probeL7 成功返回耗时毫秒数，失败返回 null
+      const okMs = await probeL7(p, item.ip, item.port);
+      if (okMs !== null) {
+        item.l7_verified = true;
+        l7VerifiedCount++;
+      } else {
+        item.l7_verified = false;
+      }
+    } else {
+      // Xray 等协议（已通过纯静态 CDN 黑名单清洗，由本地网关做精细化认证）
+      item.l7_verified = null;
+    }
+  }, 100);
+  console.log(`  L7 验活完成: ${l7VerifiedCount} 个真实可用代理`);
 
   console.log('\n=== [3/4] 导出多场景结构化分流订阅 ===');
   fs.rmSync(OUT_DIR, { recursive: true, force: true });
