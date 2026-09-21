@@ -9,15 +9,14 @@ const dns = require('dns').promises;
 const url = require('url');
 const zlib = require('zlib');
 
-const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/sample_sources.json';
+const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/all_sources.json';
 const OUT_DIR = './dist';
-const TCP_CONCURRENCY = parseInt(process.env.TCP_CONCURRENCY || '500', 10);
-const DNS_CONCURRENCY = parseInt(process.env.DNS_CONCURRENCY || '200', 10);
-const TCP_TIMEOUT_MS = parseInt(process.env.TCP_TIMEOUT_MS || '2000', 10);
-const DNS_TIMEOUT_MS = parseInt(process.env.DNS_TIMEOUT_MS || '5000', 10);
-// 0 = 不限制（全量）；>0 时按源轮询均匀采样，保证样本代表性
+const TCP_CONCURRENCY = parseInt(process.env.TCP_CONCURRENCY || '1200', 10);
+const DNS_CONCURRENCY = parseInt(process.env.DNS_CONCURRENCY || '300', 10);
+const TCP_TIMEOUT_MS = parseInt(process.env.TCP_TIMEOUT_MS || '1500', 10);
+const DNS_TIMEOUT_MS = parseInt(process.env.DNS_TIMEOUT_MS || '4000', 10);
 const MAX_CANDIDATES = parseInt(process.env.MAX_CANDIDATES || '0', 10);
-const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '20000', 10);
+const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '25000', 10);
 
 // ---------- 离线 ASN 库：真实 IP -> 国家/ASN/运营商 ----------
 let ASN_TABLE = [];
@@ -53,7 +52,7 @@ function lookupAsn(ip) {
 }
 
 // ---------- 网络工具 ----------
-function fetchText(targetUrl, timeoutMs = 15000, redirects = 3) {
+function fetchText(targetUrl, timeoutMs = 25000, redirects = 3) {
   return new Promise((resolve) => {
     let settled = false;
     const done = (v) => { if (!settled) { settled = true; resolve(v); } };
@@ -74,7 +73,6 @@ function fetchText(targetUrl, timeoutMs = 15000, redirects = 3) {
   });
 }
 
-// c-ares 纯异步解析，避免 dns.lookup 走 libuv 4 线程池卡死
 function resolveA(host) {
   return Promise.race([
     dns.resolve4(host).then((ips) => (Array.isArray(ips) && ips[0]) || null).catch(() => null),
@@ -143,7 +141,6 @@ function parseHostPort(link) {
   } catch (e) { return null; }
 }
 
-// 备注兜底国家识别（仅当 ASN 库无记录时使用）
 const FLAG_MAP = [['\uD83C\uDDEF\uD83C\uDDF5', 'JP'], ['\uD83C\uDDFA\uD83C\uDDF8', 'US'], ['\uD83C\uDDED\uD83C\uDDF0', 'HK'],
   ['\uD83C\uDDF8\uD83C\uDDEC', 'SG'], ['\uD83C\uDDF9\uD83C\uDDFC', 'TW'], ['\uD83C\uDDF0\uD83C\uDDF7', 'KR'],
   ['\uD83C\uDDEC\uD83C\uDDE7', 'GB'], ['\uD83C\uDDE9\uD83C\uDDEA', 'DE'], ['\uD83C\uDDE8\uD83C\uDDE6', 'CA'],
@@ -192,7 +189,6 @@ async function runPool(items, worker, concurrency) {
   return results;
 }
 
-// 按源轮询均匀采样，避免"从头截断"导致协议/地区分布失真
 function roundRobinSample(perSourceLists, cap) {
   const cursors = perSourceLists.map(() => 0);
   const seen = new Set();
@@ -233,13 +229,13 @@ async function main() {
     const cands = extractAllCandidates(await fetchText(t.url), t.type);
     console.log(`  - [${t.name}] (${t.type}) -> ${cands.length} 条`);
     return cands;
-  }, 8);
+  }, 10);
 
   const rawList = roundRobinSample(perSource, MAX_CANDIDATES);
   const totalFetched = perSource.reduce((s, a) => s + a.length, 0);
-  console.log(`\n抓取总量 ${totalFetched} 条，去重采样后候选 ${rawList.length} 条` + (MAX_CANDIDATES > 0 ? ` (上限 ${MAX_CANDIDATES})` : ''));
+  console.log(`\n抓取总量 ${totalFetched} 条，去重后候选 ${rawList.length} 条` + (MAX_CANDIDATES > 0 ? ` (上限 ${MAX_CANDIDATES})` : ' (全量无上限)'));
 
-  console.log('\n=== [2/4] 解析端点 + 分块 DNS 预解析 + TCP 探活 ===');
+  console.log(`\n=== [2/4] 启动 ${TCP_CONCURRENCY} 高并发分块拨测 (块大小: ${CHUNK_SIZE}, 超时: ${TCP_TIMEOUT_MS}ms) ===`);
   const alive = [];
   let parsedTotal = 0, probeTotal = 0;
   for (let off = 0; off < rawList.length; off += CHUNK_SIZE) {
@@ -253,7 +249,9 @@ async function main() {
 
     const domains = Array.from(new Set(parsed.filter(x => !net.isIP(x.ep.host)).map(x => x.ep.host)));
     const dnsCache = new Map();
-    await runPool(domains, async (d) => { dnsCache.set(d, await resolveA(d)); }, DNS_CONCURRENCY);
+    if (domains.length > 0) {
+      await runPool(domains, async (d) => { dnsCache.set(d, await resolveA(d)); }, DNS_CONCURRENCY);
+    }
 
     const tasks = parsed.map(x => ({ ...x, ip: net.isIP(x.ep.host) ? x.ep.host : dnsCache.get(x.ep.host) })).filter(x => x.ip);
     probeTotal += tasks.length;
@@ -280,7 +278,10 @@ async function main() {
     }, TCP_CONCURRENCY);
 
     for (const p of probed) if (p) alive.push(p);
-    console.log(`  分块进度: ${Math.min(off + CHUNK_SIZE, rawList.length)} / ${rawList.length} (累计存活: ${alive.length})`);
+    const progress = Math.min(off + CHUNK_SIZE, rawList.length);
+    const elapsed = Math.round((Date.now() - t0) / 1000);
+    const speed = Math.round(probeTotal / Math.max(1, elapsed));
+    console.log(`  进度: ${progress} / ${rawList.length} | 累计存活: ${alive.length} | 速率: ~${speed} 端点/秒`);
   }
 
   console.log(`\n探活完成: 存活可用数 ${alive.length} / ${probeTotal} (耗时: ${Math.round((Date.now() - t0) / 1000)}s)`);
@@ -304,8 +305,8 @@ async function main() {
   fs.writeFileSync('all_exit_meta.txt', alive.map(n =>
     `[${n.country || 'XX'}|${n.asn || '-'}|${n.rtt_ms}ms] ${n.link}`).join('\n'));
 
-  // 2. 低延迟优质池 (Top 200)
-  const topFast = alive.slice(0, 200);
+  // 2. 低延迟优质池 (Top 500)
+  const topFast = alive.slice(0, 500);
   fs.writeFileSync('high_speed.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity', Buffer.from(topFast.map(n => n.link).join('\n')).toString('base64'));
@@ -336,8 +337,8 @@ async function main() {
   fs.writeFileSync('summary.json', JSON.stringify(summary, null, 2));
 
   console.log('🎉 订阅产物导出完成：');
-  console.log(`- all_exit.txt / all_exit_meta.txt: ${alive.length} 节点 (全量多出口池，含国家/ASN/RTT 元数据)`);
-  console.log(`- high_speed.txt / Eternity.txt: ${topFast.length} 节点 (低延迟精选池)`);
+  console.log(`- all_exit.txt: ${alive.length} 节点 (全量多出口池)`);
+  console.log(`- high_speed.txt: ${topFast.length} 节点 (优质低延迟池)`);
   console.log(`- dist/by_country/: ${Object.keys(countryMap).length} 个国家地区分流`);
   console.log(`- dist/by_protocol/: ${Object.keys(protoMap).length} 个协议分流`);
   console.log(`- summary.json: 统计摘要报告`);

@@ -1,16 +1,16 @@
-name: Multi-Exit Prober (Cloud)
+name: Multi-Exit Prober (Cloud Million Pool)
 
 on:
   workflow_dispatch:
     inputs:
       sources_file:
-        description: '源清单 (sub/sample_sources.json 或 sub/all_sources.json)'
+        description: '源清单 (默认 sub/all_sources.json 全量)'
         required: false
-        default: 'sub/sample_sources.json'
+        default: 'sub/all_sources.json'
       max_candidates:
-        description: '最大探测候选数 (0 = 不限/全量百万)'
+        description: '最大探测候选数 (0 = 全量无上限)'
         required: false
-        default: '10000'
+        default: '0'
   schedule:
     - cron: "0 */6 * * *"
 
@@ -19,33 +19,40 @@ permissions:
 
 jobs:
   run:
-    name: Probe & Distribute
+    name: Million Prober & Distribute
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js Runtime
+        uses: actions/setup-node@v4
         with:
           node-version: "20"
 
-      - name: Run Cloud Prober
+      - name: Increase System File Limits
+        run: |
+          ulimit -n 65535 || true
+
+      - name: Run Million Prober (Azure Bandwidth)
         env:
-          SOURCES_FILE: ${{ github.event.inputs.sources_file || 'sub/sample_sources.json' }}
-          MAX_CANDIDATES: ${{ github.event.inputs.max_candidates || '10000' }}
-          TCP_CONCURRENCY: "500"
-          DNS_CONCURRENCY: "200"
-          TCP_TIMEOUT_MS: "2000"
+          SOURCES_FILE: ${{ github.event.inputs.sources_file || 'sub/all_sources.json' }}
+          MAX_CANDIDATES: ${{ github.event.inputs.max_candidates || '0' }}
+          TCP_CONCURRENCY: "1200"
+          DNS_CONCURRENCY: "300"
+          TCP_TIMEOUT_MS: "1500"
+          CHUNK_SIZE: "25000"
         run: |
           node probe.js "$SOURCES_FILE"
 
-      - name: Commit & Push Distribution
+      - name: Commit & Push Multi-Exit Feeds
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
-          git add -A all_exit.json all_exit.txt all_exit_meta.txt all_exit_base64.txt high_speed.txt Eternity Eternity.txt dist/ summary.json 2>/dev/null || true
+          git add -A all_exit.json all_exit.txt all_exit_meta.txt all_exit_base64.txt high_speed.txt Eternity Eternity.txt dist/ summary.json
           if git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Multi-Exit Distribution"
+            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Million Multi-Exit Pool Updated"
             git push origin master
           fi
