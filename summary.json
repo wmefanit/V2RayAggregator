@@ -1,15 +1,17 @@
 {
-  "updated_at": "2026-09-21T20:42:21.843Z",
-  "total_raw_candidates": 56550,
-  "valid_endpoints": 5000,
-  "dns_resolved": 4458,
-  "alive_nodes": 846,
+  "updated_at": "2026-09-21T20:46:01.210Z",
+  "total_raw_candidates": 56552,
+  "valid_endpoints": 15000,
+  "dns_resolved": 12817,
+  "alive_nodes": 5848,
   "top_fast_nodes": 100,
   "countries": {
-    "BR": 846
+    "OTHER": 5848
   },
   "protocols": {
-    "ss": 846
+    "ss": 1214,
+    "trojan": 2643,
+    "vless": 1991
   },
-  "elapsed_seconds": 18
+  "elapsed_seconds": 44
 }
