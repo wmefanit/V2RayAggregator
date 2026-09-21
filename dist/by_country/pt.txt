@@ -1,1 +1,19 @@
+socks5://94.46.172.104:443
+socks5://94.46.172.104:80
+http://193.137.38.135:443
+http://94.46.172.104:80
+socks5://195.22.25.125:443
+http://94.46.172.104:443
+http://195.22.25.125:443
+socks5://193.136.192.57:443
+vless://af067205-3dec-4d8d-a9cc-001e122e00de@nl1.miyazono-kaori.com:443?&security=reality&flow=xtls-rprx-vision&pbk=AFQAIB5u9Uu6nf9fkP1BdcSHivSuUv97l4FH-LoFYgw&sid=92dca6&fp=chrome&sni=www.philips.com&type=tcp&headerType=&host=www.philips.com&path=%2F# By EbraSha 💻
+vless://af067205-3dec-4d8d-a9cc-001e122e00de@nl1.miyazono-kaori.com:443?&security=reality&flow=xtls-rprx-vision&pbk=AFQAIB5u9Uu6nf9fkP1BdcSHivSuUv97l4FH-LoFYgw&sid=92dca6&fp=chrome&sni=www.philips.com&type=tcp&headerType=none&host=nl1.miyazono-kaori.com&path=%2F# By EbraSha ⛓️
+vless://0b456ae4-1208-409a-b15b-7af66d4fe191@nl2.miyazono-kaori.com:443?&security=reality&flow=xtls-rprx-vision&pbk=Ncb78PVwvwU2tB1eiOlJd0ZCG2CbqG7-dPIHztlq2yM&sid=69cc4c0d5e&fp=chrome&sni=www.philips.com&type=tcp&headerType=none&host=www.philips.com&path=%2F# By EbraSha 🧠
+http://193.136.192.57:443
+socks4://94.46.172.104:80
 http://176.61.151.123:80
+socks5://193.126.225.110:8089
+socks5://94.249.197.220:40001
+https://176.61.151.123:80
+socks5://176.61.151.123:80
+http://94.249.197.220:40001

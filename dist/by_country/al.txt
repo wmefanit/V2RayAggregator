@@ -1,2 +1,126 @@
-ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo3VUVDbXo4T29jNUhseGhkdTNoNWJ3@103.167.234.75:8443# By EbraSha 👑
+vless://8d7a09ce-7285-4713-babf-b3ac9ad58605@93.123.46.100:443/?type=tcp&encryption=none&flow=xtls-rprx-vision&sni=spirako.com&fp=chrome&security=reality&pbk=0hH6R90pSxwm7nZPGtJJcJFhwCXU3Rvf-wcEHE7hczo&sid=# By EbraSha 🧨
+socks5://203.30.219.5:8080
+http://203.30.219.5:8080
+vless://f788e136-b245-4617-9d41-b505c7f41ef9@deu196.unboundaccess.org:443?security=reality&encryption=none&pbk=BhTJ3phnq-Z-10aFKSsj1lzhA8mULR4L6leE4-0WTAs&headerType=none&fp=chrome&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=www.bing.com# By EbraSha 🔌
+vless://f788e136-b245-4617-9d41-b505c7f41ef9@deu196.unboundaccess.org:443?security=reality&encryption=none&pbk=BhTJ3phnq-Z-10aFKSsj1lzhA8mULR4L6leE4-0WTAs&headerType=none&fp=chrome&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=www.bing.com#%F0%9F%87%A9%F0%9F%87%AA%20G
+vless://0de1047d-fadd-4075-a08e-2223c5dadd0a@bnv.childofarya.ir:18334?encryption=none&type=tcp&security=reality&sni=primevideo.com&fp=chrome&pbk=qiWNRSFSb1Jx9i7XavA6sQD_coyuYjMod8iDGYeVrxc&sid=ff099a8b449fbead&allowInsecure=1# By EbraSha 📀
+socks5://91.92.250.33:443
+vless://0de1047d-fadd-4075-a08e-2223c5dadd0a@alnb.chainmark.ir:44811?encryption=none&type=tcp&security=reality&sni=app.stiga.com&fp=chrome&pbk=5V9UBM3WxVbCvEwW-FOxiBKlQTdMR9aScIfy53zefzM&sid=b53a4597ec327aec&allowInsecure=1# By EbraSha ♠️
+vless://c18b978e-1c4e-415c-8bea-07942b563a64@103.167.234.26:443?fp=chrome&host=shuma.ccwu.cc&path=%2F&security=tls&sni=shuma.ccwu.cc&type=ws# By EbraSha 🎯
+vless://c18b978e-1c4e-415c-8bea-07942b563a64@103.167.234.26:443?fp=chrome&host=shuma.ccwu.cc&path=%2F&security=tls&sni=shuma.ccwu.cc&type=ws#%F0%9F%87%B5%F0%9F%87%B1_%E6%B3%A2%E5%85%B0_235
+ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo3VUVDbXo4T29jNUhseGhkdTNoNWJ3@103.167.234.75:8443# By EbraSha 🕶️
+socks5://84.22.45.175:1080
+socks4://84.22.45.175:1080
+socks5://185.188.216.222:80
+https://185.174.208.195:8080
+http://84.22.47.86:8000
+http://84.22.59.149:8080
+socks5://84.22.59.149:8080
+http://185.188.216.222:80
+https://66.186.199.33:8080
+socks4://185.188.216.222:80
+http://91.92.250.33:443
+socks5://80.78.74.66:65530
+https://91.187.113.68:8080
+socks4://77.242.22.227:8000
+http://185.66.129.102:8000
+http://80.78.72.58:443
+socks5://80.78.74.8:65530
+socks5://77.242.22.227:8000
+socks5://185.66.129.102:8000
+http://80.78.76.32:8080
+socks5://91.187.99.156:8000
+http://80.91.125.121:8888
+vless://fbb74aa8-b89a-4f20-9504-6b25aadf6681@alban2.freeinternat.com:443?type=tcp&security=reality&flow=xtls-rprx-vision&fp=firefox&pbk=bZpzmeWiEJyJQy0W2hHc34Nr6BuFXj1UDd80Cbwh1Fk&sid=ff776ff77be48b88&sni=alban2.freeinternat.com# By EbraSha 🌃
+socks5://91.239.7.76:80
+socks5://91.239.7.68:80
+http://37.252.221.73:8000
+socks5://91.239.7.73:80
+socks5://195.144.24.57:3128
+https://195.144.24.57:3128
+vless://76be2b92-8010-4ebd-8c94-8d778fb92311@195.144.24.145:443?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&fp=edge&pbk=Q0351ApYOgCGCOgSEROnacDdm7xp-kLs9mYddSDFwRQ&sid=360881fdb193758d&sni=www.twitch.tv&spx=/# By EbraSha 🚀
+socks5://37.252.221.73:8000
+http://134.0.63.185:443
+socks5://91.239.7.74:80
+socks5://80.78.76.32:8080
+http://79.106.229.115:8989
+http://79.106.24.97:8081
+http://91.239.7.74:80
+http://45.67.0.172:6608
+socks5://80.78.72.58:443
+socks5://80.91.125.121:8888
+socks4://31.171.155.210:9443
+http://31.171.155.210:9443
+http://91.239.7.68:80
+socks5://188.68.1.66:5935
+http://31.171.154.66:443
+http://45.67.0.122:6558
+http://45.67.0.242:6678
+http://45.67.0.91:6527
+http://45.67.2.133:5707
+http://45.67.2.175:5749
+http://45.67.2.176:5750
+http://45.67.2.191:5765
+http://45.67.2.237:5811
+socks5://45.67.2.150:5724
+http://91.187.99.156:8000
+socks4://195.144.24.57:3128
+socks5://45.67.0.200:6636
+https://45.67.0.200:6636
+http://77.242.22.227:8000
+http://45.67.0.178:6614
+http://91.187.122.188:8000
+https://79.106.229.115:8989
+https://79.106.44.66:2095
+socks4://46.99.135.237:8080
+http://188.68.1.241:6110
+http://45.67.0.161:6597
+http://45.67.3.190:6353
+socks5://31.171.155.210:9443
+http://188.68.1.104:5973
+socks5://45.67.2.133:5707
+socks5://45.67.2.35:5609
+http://31.171.154.66:9443
+http://45.67.2.150:5724
+socks5://79.106.24.97:8081
+vless://8ad85ca5-7572-4ee7-8a42-a2e5c9a0e479@85.155.228.197:10000?type=tcp&security=reality&fp=firefox&pbk=Du5pk4KuMNA1sRcSpmuoLuC0HmxDBmFljFNfUzqxKiM&sid=cd0a1986719e44c8&sni=amp-api-edge.apps.apple.com# By EbraSha 🛰️
+http://84.22.45.175:1080
+http://45.67.3.82:6245
+socks5://45.67.0.76:6512
+http://91.239.7.73:80
+socks5://46.99.135.237:8080
+socks4://91.239.7.76:80
+http://45.67.0.200:6636
+socks4://91.239.7.68:80
+http://45.67.3.120:6283
+socks5://45.67.2.167:5741
+vless://8ad85ca5-7572-4ee7-8a42-a2e5c9a0e479@albania-sgood.wopd.butnorwa.butter.silicore.ir:10000?&security=reality&pbk=Du5pk4KuMNA1sRcSpmuoLuC0HmxDBmFljFNfUzqxKiM&sid=cd0a1986719e44c8&fp=chrome&sni=amp-api-edge.apps.apple.com&type=tcp&headerType=none&host=amp-api-edge.apps.apple.com&path=%2F# By EbraSha 🧿
+http://45.67.3.183:6346
+socks5://45.67.2.20:5594
+socks5://45.67.0.122:6558
+socks5://45.67.2.176:5750
+http://188.68.1.20:5889
+http://188.68.1.214:6083
+http://188.68.1.66:5935
+http://45.67.2.35:5609
+http://45.67.3.219:6382
+http://45.67.3.36:6199
+http://188.68.1.249:6118
+http://45.67.2.20:5594
+socks5://45.67.3.120:6283
+http://45.67.2.167:5741
+socks5://91.187.122.188:8000
+socks5://134.0.63.185:443
+socks5://45.67.0.178:6614
+socks4://185.190.90.2:4145
+vless://604c8c22-1524-4a3f-b85f-d3375482dcc4@85.155.228.35:443?type=tcp&security=reality&encryption=none&flow=xtls-rprx-vision&fp=edge&pbk=Q0351ApYOgCGCOgSEROnacDdm7xp-kLs9mYddSDFwRQ&sid=360881fdb193758d&sni=github.com# By EbraSha 🎛️
+socks4://45.67.0.200:6636
+socks5://188.68.1.249:6118
+http://45.67.0.76:6512
+http://91.239.7.76:80
+https://46.99.251.82:8080
+http://80.78.74.8:65530
+https://80.78.74.8:65530
+socks4://37.252.221.73:8000
 http://195.144.24.57:3128
+https://79.106.79.154:8989

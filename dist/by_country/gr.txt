@@ -1,0 +1,58 @@
+vless://34c01e61-f4f3-4afb-a83b-406caf8caa33@109.176.239.143:8880/?type=ws&encryption=none&host=yg.bantony199.top&path=%2FTelegram%F0%9F%87%A8%F0%9F%87%B3%20%40WangCai2%20%2F%3Fed%3D2560# By EbraSha ⌨️
+vless://583ceab3-4022-4553-9158-9bedc625ad4e@109.176.239.188:8880?allowInsecure=0&sni=Telegram-channel-WangCai2&type=ws&host=ip.langmanshanxi.top&path=/TelegramU0001F1E8U0001F1F3# By EbraSha 🧊
+vless://583ceab3-4022-4553-9158-9bedc625ad4e@109.176.239.177:8880?security=&type=ws&path=/TelegramU0001F1E8U0001F1F3# By EbraSha 🔌
+vless://0132166f-e702-48ed-a9e7-b07af768faf8@109.176.239.251:8880/?type=ws&encryption=none&host=cf.d3z.net&path=%2FTelegram%F0%9F%87%A8%F0%9F%87%B3%20%40WangCai2%20%2F%3Fed%3D2560# By EbraSha 🧬
+vless://b5441b0d-2147-4898-8a6a-9b2c87f58382@109.176.239.3:8880?allowInsecure=0&sni=Telegram-channel-WangCai2&type=ws&host=bitget1.asdasd.click&path=/Telegram# By EbraSha 📼
+http://45.56.228.8:443
+socks5://45.56.228.8:443
+http://92.112.85.121:5856
+socks5://92.112.95.163:6898
+http://92.112.85.63:5798
+http://92.112.95.129:6864
+http://92.112.82.157:5392
+http://92.112.82.239:5474
+http://92.112.95.217:6952
+http://92.112.95.2:6737
+socks5://92.112.82.231:5466
+http://92.112.82.34:5269
+socks5://92.112.82.157:5392
+socks5://92.112.85.238:5973
+socks5://92.112.91.160:6395
+http://92.112.91.160:6395
+http://92.112.91.200:6435
+http://92.112.95.111:6846
+socks5://92.112.95.205:6940
+http://92.112.82.124:5359
+http://92.112.95.125:6860
+socks5://92.112.82.25:5260
+socks5://92.112.95.41:6776
+socks5://92.112.91.200:6435
+socks5://92.112.95.132:6867
+socks5://92.112.85.121:5856
+http://92.112.95.163:6898
+http://88.197.53.165:443
+http://92.112.95.132:6867
+http://92.112.95.41:6776
+http://92.112.82.25:5260
+http://92.112.82.94:5329
+http://92.112.85.238:5973
+https://150.140.148.235:80
+socks4://62.103.186.66:4153
+socks5://62.217.72.121:80
+socks5://92.112.95.2:6737
+socks5://92.112.95.125:6860
+socks5://62.103.186.66:4153
+http://62.217.72.121:80
+socks5://88.197.53.165:443
+http://92.112.95.205:6940
+http://92.112.82.231:5466
+http://92.112.82.72:5307
+http://92.112.85.188:5923
+trojan://gAFsFYKWb6@mmd.asan9720.ir:8880?mode=auto&path=/&security=reality&extra={"xPaddingBytes":"100-1000"}&pbk=6f4gYYvBFM7iGf9zfFhUWRMoRTrK4zUl7soYqsEDMHI&fp=chrome&spx=/&type=xhttp&sni=www.aparat.com&sid=187d5974e9#EPODONIOS
+vless://27dcb3a9-c82d-4628-a8c4-bae39e6cb4f4@185.226.67.182:443?encryption=none&flow=xtls-rprx-vision&fp=firefox&pbk=JyGDRuOThmoCQ2pYD5VyPnFBKb25RqwqJ6-W-tNHBlY&security=reality&sid=0491f3e34348cb95&sni=depa.kupivodku.top&type=tcp# By EbraSha 📱
+trojan://gAFsFYKWb6@mmd.asan9720.ir:8880?mode=auto&path=/&security=reality&extra={"xPaddingBytes":"100-1000"}&pbk=6f4gYYvBFM7iGf9zfFhUWRMoRTrK4zUl7soYqsEDMHI&fp=chrome&spx=/&type=xhttp&sni=www.aparat.com&sid=187d5974e9#Telegram @mtmvpn
+trojan://gAFsFYKWb6@mmd.asan9720.ir:8880?mode=auto&path=/&security=reality&extra={"xPaddingBytes":"100-1000"}&pbk=6f4gYYvBFM7iGf9zfFhUWRMoRTrK4zUl7soYqsEDMHI&fp=chrome&spx=/&type=xhttp&sni=www.aparat.com&sid=187d5974e9# By EbraSha 🌌
+vless://27dcb3a9-c82d-4628-a8c4-bae39e6cb4f4@depa.kupivodku.top:443?flow=xtls-rprx-vision&encryption=none&security=reality&sni=depa.kupivodku.top&fp=edge&pbk=JyGDRuOThmoCQ2pYD5VyPnFBKb25RqwqJ6-W-tNHBlY&sid=0491f3e34348cb95&spx=%2F&type=tcp&headerType=none# By EbraSha 🧠
+socks5://194.177.207.44:3128
+socks4://194.177.207.44:3128
+socks4://62.103.66.18:3128
