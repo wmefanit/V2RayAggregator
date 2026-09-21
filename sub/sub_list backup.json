@@ -1,0 +1,146 @@
+[
+  {
+    "id": 0,
+    "remarks": "shaoyouvip-free",
+    "site": "https://raw.githubusercontent.com/shaoyouvip/free/main/README.md",
+    "url": "https://raw.githubusercontent.com/shaoyouvip/free/main/README.md",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 1,
+    "remarks": "barry-far-v2ray",
+    "site": "https://raw.githubusercontent.com/barry-far/V2ray-Config/main/All_Configs_Sub.txt",
+    "url": "https://raw.githubusercontent.com/barry-far/V2ray-Config/main/All_Configs_Sub.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 2,
+    "remarks": "nyeinkokoaung404",
+    "site": "https://raw.githubusercontent.com/nyeinkokoaung404/V2ray-Configs/main/All_Configs_Sub.txt",
+    "url": "https://raw.githubusercontent.com/nyeinkokoaung404/V2ray-Configs/main/All_Configs_Sub.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 3,
+    "remarks": "Delta-Kronecker",
+    "site": "https://raw.githubusercontent.com/Delta-Kronecker/V2ray-Config/main/sub.txt",
+    "url": "https://raw.githubusercontent.com/Delta-Kronecker/V2ray-Config/main/sub.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 4,
+    "remarks": "mfuu-v2ray",
+    "site": "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray",
+    "url": "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 5,
+    "remarks": "MhdiTaheri-mix",
+    "site": "https://raw.githubusercontent.com/MhdiTaheri/V2rayCollector/main/sub/mix",
+    "url": "https://raw.githubusercontent.com/MhdiTaheri/V2rayCollector/main/sub/mix",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 6,
+    "remarks": "umelabs",
+    "site": "https://raw.githubusercontent.com/umelabs/node.umelabs.dev/master/Subscribe/v2ray.md",
+    "url": "https://raw.githubusercontent.com/umelabs/node.umelabs.dev/master/Subscribe/v2ray.md",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 7,
+    "remarks": "Proxy-sorter",
+    "site": "https://raw.githubusercontent.com/Surfboardv2ray/Proxy-sorter/main/submerge/converted.txt",
+    "url": "https://raw.githubusercontent.com/Surfboardv2ray/Proxy-sorter/main/submerge/converted.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 8,
+    "remarks": "nicevpn",
+    "site": "https://sub.nicevpn.top/long",
+    "url": "https://sub.nicevpn.top/long",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 9,
+    "remarks": "Epodonios",
+    "site": "https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/All_Configs_base64_Sub.txt",
+    "url": "https://raw.githubusercontent.com/Epodonios/v2ray-configs/main/All_Configs_base64_Sub.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 10,
+    "remarks": "ggborr",
+    "site": "https://raw.githubusercontent.com/ggborr/FREEE-VPN/refs/heads/main/5V2",
+    "url": "https://raw.githubusercontent.com/ggborr/FREEE-VPN/refs/heads/main/5V2",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 11,
+    "remarks": "free18",
+    "site": "https://ghfast.top/https://raw.githubusercontent.com/free18/v2ray/refs/heads/main/v.txt",
+    "url": "https://ghfast.top/https://raw.githubusercontent.com/free18/v2ray/refs/heads/main/v.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 12,
+    "remarks": "barry-far-base64",
+    "site": "https://raw.githubusercontent.com/barry-far/V2ray-config/main/All_Configs_base64_Sub.txt",
+    "url": "https://raw.githubusercontent.com/barry-far/V2ray-config/main/All_Configs_base64_Sub.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 13,
+    "remarks": "PuddinCat",
+    "site": "https://raw.githubusercontent.com/PuddinCat/BestClash/refs/heads/main/proxies.yaml",
+    "url": "https://raw.githubusercontent.com/PuddinCat/BestClash/refs/heads/main/proxies.yaml",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 14,
+    "remarks": "ebrasha-v2ray",
+    "site": "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/refs/heads/main/V2Ray-Config-By-EbraSha-All-Type.txt",
+    "url": "https://raw.githubusercontent.com/ebrasha/free-v2ray-public-list/refs/heads/main/V2Ray-Config-By-EbraSha-All-Type.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 15,
+    "remarks": "roosterkid-v2ray",
+    "site": "https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/V2RAY_RAW.txt",
+    "url": "https://raw.githubusercontent.com/roosterkid/openproxylist/refs/heads/main/V2RAY_RAW.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 16,
+    "remarks": "tglaoshiji",
+    "site": "https://raw.githubusercontent.com/tglaoshiji/nodeshare/refs/heads/main/2026/v2ray.txt",
+    "url": "https://raw.githubusercontent.com/tglaoshiji/nodeshare/refs/heads/main/2026/v2ray.txt",
+    "update_method": "auto",
+    "enabled": true
+  },
+  {
+    "id": 17,
+    "remarks": "sub-cf-250301",
+    "site": "https://sub-cf-250301.pages.dev/auto",
+    "url": "https://sub-cf-250301.pages.dev/auto",
+    "update_method": "auto",
+    "enabled": true
+  }
+]
