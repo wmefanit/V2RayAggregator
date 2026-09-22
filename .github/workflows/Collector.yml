@@ -11,6 +11,15 @@ on:
         description: '最大探测候选数 (0 = 全量无上限；非 0 视为冒烟测试，只发 smoke-test 预发布，绝不覆盖 latest)'
         required: false
         default: '0'
+      enable_xray_l7:
+        description: '是否启用 Xray 协议真实 L7 验活（true=开启，false=跳过，仅保留 TCP 存活）'
+        required: false
+        type: boolean
+        default: true
+      xray_l7_limit:
+        description: 'Xray L7 限测数量 (0 = 全量测完；非 0 = 只测前 N 个，用于快速冒烟)'
+        required: false
+        default: '0'
   schedule:
     - cron: "0 */6 * * *"
 
@@ -35,6 +44,20 @@ jobs:
       - name: Increase System File Limits
         run: |
           ulimit -n 65535 || true
+
+      # 可选阶段工具：xrayprobe（proxy-go 编译产物的单二进制，静态链接 xray 内核，无动态库依赖）。
+      # 关闭开关时不下载、不执行，总流水线保持 ~29 分钟的极速路径。
+      - name: Download Xray Prober Tool (Only when enabled)
+        run: |
+          if [ "$ENABLE_XRAY_L7" = "1" ]; then
+            curl -fsSL -o xrayprobe "https://github.com/wmefanit/V2RayAggregator/releases/download/tools/xrayprobe"
+            chmod +x xrayprobe
+            echo "xrayprobe ready ($(ls -lh xrayprobe | awk '{print $5}'))"
+          else
+            echo "ENABLE_XRAY_L7=0 -> 跳过 xrayprobe 下载"
+          fi
+        env:
+          ENABLE_XRAY_L7: ${{ github.event.inputs.enable_xray_l7 != 'false' && '1' || '0' }}
 
       # 冒烟运行（max_candidates != 0）只做验证，产物写到 smoke-test 预发布 tag；
       # 正式全量运行（max_candidates == 0，含定时任务）才写 latest，防止小样本污染正式订阅。
@@ -63,6 +86,10 @@ jobs:
           TCP_TIMEOUT_MS: "2000"
           L7_TIMEOUT_MS: "4000"
           CHUNK_SIZE: "20000"
+          ENABLE_XRAY_L7: ${{ github.event.inputs.enable_xray_l7 != 'false' && '1' || '0' }}
+          XRAY_L7_LIMIT: ${{ github.event.inputs.xray_l7_limit || '0' }}
+          XRAY_L7_CONCURRENCY: "400"
+          XRAY_L7_TIMEOUT: "4"
         run: |
           node probe.js "$SOURCES_FILE"
 
@@ -124,8 +151,10 @@ jobs:
           ASSETS="all_exit.txt all_exit_meta.txt all_exit_base64.txt \
             all_l7_verified.txt all_l7_verified_meta.json \
             xray_alive.txt xray_alive_meta.json \
+            all_xray_verified.txt all_xray_verified_meta.json \
             high_speed.txt high_speed_meta.json \
             high_speed_socks5.txt high_speed_socks4.txt high_speed_http.txt \
+            high_speed_vless.txt high_speed_vmess.txt high_speed_trojan.txt high_speed_ss.txt \
             Eternity.txt summary.json \
             dist_country.tar.gz dist_protocol.tar.gz"
 

@@ -21,3 +21,5 @@ all_l7_verified*.json
 xray_alive*.txt
 xray_alive*.json
 high_speed_meta.json
+xray_l7_candidates.txt
+xray_l7_result.json

@@ -9,6 +9,7 @@ const tls = require('tls');
 const dns = require('dns').promises;
 const url = require('url');
 const zlib = require('zlib');
+const { spawn } = require('child_process');
 
 const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/all_sources.json';
 const OUT_DIR = './dist';
@@ -20,6 +21,15 @@ const L7_TIMEOUT_MS = parseInt(process.env.L7_TIMEOUT_MS || '4000', 10);
 const DNS_TIMEOUT_MS = parseInt(process.env.DNS_TIMEOUT_MS || '4000', 10);
 const MAX_CANDIDATES = parseInt(process.env.MAX_CANDIDATES || '0', 10);
 const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '20000', 10);
+
+// ---------- 可选阶段：Xray 协议真实 L7 验活 ----------
+// 由外部 xrayprobe 二进制完成（proxy-go 编译产物，静态链接 xray 内核，无动态库依赖）。
+// 关闭时（默认 0）跳过该阶段，Xray 节点仅保留 TCP 存活分层。
+const ENABLE_XRAY_L7 = (process.env.ENABLE_XRAY_L7 || '0') === '1' || (process.env.ENABLE_XRAY_L7 || '').toLowerCase() === 'true';
+const XRAYPROBE_BIN = process.env.XRAYPROBE_BIN || './xrayprobe';
+const XRAY_L7_CONCURRENCY = parseInt(process.env.XRAY_L7_CONCURRENCY || '300', 10);
+const XRAY_L7_TIMEOUT = process.env.XRAY_L7_TIMEOUT || '6';
+const XRAY_L7_LIMIT = parseInt(process.env.XRAY_L7_LIMIT || '0', 10);
 
 // ---------- 离线 ASN 库：真实 IP -> 国家/ASN/运营商 ----------
 let ASN_TABLE = [];
@@ -517,6 +527,63 @@ function roundRobinSample(perSourceLists, cap) {
   return out;
 }
 
+// ---------- 多协议配额均衡挑选（纯函数，便于单测）----------
+// 先按各协议配额取优（保证协议代表性），再用全局最快剩余节点补足到 total。
+function buildBalancedPool(lists, quotas, total = 500) {
+  const picked = [];
+  const usedByProto = {};
+  for (const proto of Object.keys(quotas)) {
+    const arr = lists[proto] || [];
+    const take = Math.min(quotas[proto], arr.length);
+    picked.push(...arr.slice(0, take));
+    usedByProto[proto] = take;
+  }
+  if (picked.length < total) {
+    const rest = [];
+    for (const proto of Object.keys(lists)) {
+      rest.push(...(lists[proto] || []).slice(usedByProto[proto] || 0));
+    }
+    rest.sort((a, b) => (a.l7_rtt_ms || 9999) - (b.l7_rtt_ms || 9999));
+    picked.push(...rest.slice(0, total - picked.length));
+  }
+  // 最终仍按实测业务延迟升序，保证 high_speed 的“快”语义
+  picked.sort((a, b) => (a.l7_rtt_ms || 9999) - (b.l7_rtt_ms || 9999));
+  return picked;
+}
+
+// 调用外部 xrayprobe 二进制批量验活（失败不抛，返回 null 表示阶段跳过）
+function runXrayProbe(candidates) {
+  return new Promise((resolve) => {
+    if (!fs.existsSync(XRAYPROBE_BIN)) {
+      console.log(`  [Xray L7] 跳过：未找到探针二进制 ${XRAYPROBE_BIN}（如需开启请先下载或设置 XRAYPROBE_BIN）`);
+      return resolve(null);
+    }
+    const inFile = 'xray_l7_candidates.txt';
+    const outJson = 'xray_l7_result.json';
+    fs.writeFileSync(inFile, candidates.map((c) => c.link).join('\n'));
+    const args = ['-in', inFile, '-out', outJson, '-conc', String(XRAY_L7_CONCURRENCY), '-timeout', String(XRAY_L7_TIMEOUT)];
+    if (XRAY_L7_LIMIT > 0) args.push('-limit', String(XRAY_L7_LIMIT));
+    console.log(`  [Xray L7] 启动外部探针: ${XRAYPROBE_BIN} ${args.join(' ')}（候选 ${candidates.length} 个）`);
+    const child = spawn(XRAYPROBE_BIN, args, { stdio: ['ignore', 'inherit', 'inherit'] });
+    child.on('error', (e) => {
+      console.log(`  [Xray L7] 探针启动失败，跳过该阶段: ${e.message}`);
+      resolve(null);
+    });
+    child.on('close', (code) => {
+      if (code !== 0) {
+        console.log(`  [Xray L7] 探针退出码 ${code}，跳过该阶段`);
+        return resolve(null);
+      }
+      try {
+        resolve(JSON.parse(fs.readFileSync(outJson, 'utf8')));
+      } catch (e) {
+        console.log(`  [Xray L7] 结果解析失败，跳过该阶段: ${e.message}`);
+        resolve(null);
+      }
+    });
+  });
+}
+
 async function main() {
   const t0 = Date.now();
   console.log(`=== [1/4] 读取源配置: ${CONFIG_FILE} ===`);
@@ -660,6 +727,30 @@ async function main() {
   const l7Sec = Math.round((Date.now() - l7T0) / 1000);
   console.log(`  协议通断完成: 尝试 ${l7Attempted} 个直接代理，${l7Passed} 个通过真实中立内容校验 (不通 ${l7Failed})，耗时 ${l7Sec}s`);
 
+  // === [2.6/4] 可选阶段：Xray 协议真实 L7 验活（外部 xrayprobe 二进制）===
+  let xrayVerified = [];
+  if (ENABLE_XRAY_L7) {
+    const xrayCandidates = alive.filter((n) => ['vless', 'vmess', 'trojan', 'ss'].includes((n.proto || '').toLowerCase()));
+    console.log(`\n=== [2.6/4] Xray L7 真验活（候选 ${xrayCandidates.length}，并发 ${XRAY_L7_CONCURRENCY}，超时 ${XRAY_L7_TIMEOUT}s）===`);
+    const xrayT0 = Date.now();
+    const xrayResults = await runXrayProbe(xrayCandidates);
+    if (xrayResults) {
+      const byLink = new Map(xrayCandidates.map((n) => [n.link, n]));
+      for (const r of xrayResults) {
+        if (!r || !r.ok) continue;
+        const item = byLink.get(r.link);
+        if (!item) continue;
+        item.verification = 'l7_xray_verified';
+        item.l7_rtt_ms = r.ms;
+        xrayVerified.push(item);
+      }
+      xrayVerified.sort((a, b) => (a.l7_rtt_ms || 9999) - (b.l7_rtt_ms || 9999));
+      console.log(`  Xray L7 完成: ${xrayVerified.length}/${xrayResults.length} 通过，耗时 ${Math.round((Date.now() - xrayT0) / 1000)}s`);
+    }
+  } else {
+    console.log('\n=== [2.6/4] Xray L7 阶段未启用（ENABLE_XRAY_L7=0），Xray 仅保留 TCP 存活分层 ===');
+  }
+
   console.log('\n=== [3/4] 导出分层结构化产物 (多协议均衡与独立分桶) ===');
   fs.rmSync(OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(path.join(OUT_DIR, 'by_country'), { recursive: true });
@@ -685,36 +776,46 @@ async function main() {
     tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_verified'
   })), null, 2));
 
-  // 3. Xray 待验池 (云端已确认为 TCP 存活的 Xray 节点，供本地快速精验)
+  // 3. Xray 待验池（TCP 可达但云端未验活的 Xray 节点，供本地精验；已验活的另在 all_xray_verified）
   const XRAY_PROTOS = new Set(['vless', 'vmess', 'trojan', 'ss', 'ssr']);
-  const xrayAlive = alive.filter(n => XRAY_PROTOS.has((n.proto || '').toLowerCase()));
+  const xrayAlive = alive.filter(n => XRAY_PROTOS.has((n.proto || '').toLowerCase()) && n.verification !== 'l7_xray_verified');
   fs.writeFileSync('xray_alive.txt', xrayAlive.map(n => n.link).join('\n'));
   fs.writeFileSync('xray_alive_meta.json', JSON.stringify(xrayAlive.map(n => ({
     link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
     tcp_rtt_ms: n.rtt_ms, verification: 'tcp_only'
   })), null, 2));
 
-  // 4. 多协议均衡的高速精选池 (彻底消除单协议霸榜)
-  // 分配策略：优先从 SOCKS5 取最多 250 个，SOCKS4 取最多 50 个，HTTP 取剩余名额补齐至 500 个
+  // 4. 多协议均衡的高速精选池（含可选 Xray 真验活节点，彻底消除单协议霸榜）
   const verifiedSocks5 = l7Verified.filter(n => (n.proto || '').toLowerCase() === 'socks5');
   const verifiedSocks4 = l7Verified.filter(n => (n.proto || '').toLowerCase() === 'socks4');
   const verifiedHttp = l7Verified.filter(n => {
     const p = (n.proto || '').toLowerCase();
     return p === 'http' || p === 'https';
   });
+  const verifiedVless = xrayVerified.filter(n => (n.proto || '').toLowerCase() === 'vless');
+  const verifiedVmess = xrayVerified.filter(n => (n.proto || '').toLowerCase() === 'vmess');
+  const verifiedTrojan = xrayVerified.filter(n => (n.proto || '').toLowerCase() === 'trojan');
+  const verifiedSs = xrayVerified.filter(n => (n.proto || '').toLowerCase() === 'ss');
 
-  const pickS5 = verifiedSocks5.slice(0, 250);
-  const pickS4 = verifiedSocks4.slice(0, 50);
-  const remainingCap = Math.max(0, 500 - pickS5.length - pickS4.length);
-  const pickHttp = verifiedHttp.slice(0, remainingCap);
+  // 配额策略：Xray 阶段开启且确有验活节点时，为各 Xray 协议预留配额；否则保持纯 HTTP/SOCKS 均衡
+  const quotas = xrayVerified.length > 0
+    ? { socks5: 150, http: 100, vless: 120, trojan: 40, vmess: 40, socks4: 30, ss: 20 }
+    : { socks5: 250, socks4: 50, http: 200 };
+  const poolLists = {
+    socks5: verifiedSocks5, socks4: verifiedSocks4, http: verifiedHttp,
+    vless: verifiedVless, vmess: verifiedVmess, trojan: verifiedTrojan, ss: verifiedSs,
+  };
+  const balancedTop = buildBalancedPool(poolLists, quotas, 500);
+  const balancedByProto = {};
+  for (const n of balancedTop) {
+    const p = (n.proto || 'unknown').toLowerCase();
+    balancedByProto[p] = (balancedByProto[p] || 0) + 1;
+  }
 
-  // 组装综合精选池（内部仍按各自实测业务延迟排序）
-  const balancedTop = [...pickS5, ...pickS4, ...pickHttp].sort((a, b) => (a.l7_rtt_ms || 9999) - (b.l7_rtt_ms || 9999));
-  
   fs.writeFileSync('high_speed.txt', balancedTop.map(n => n.link).join('\n'));
   fs.writeFileSync('high_speed_meta.json', JSON.stringify(balancedTop.map(n => ({
     link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
-    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_verified'
+    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: n.verification || 'l7_verified'
   })), null, 2));
   fs.writeFileSync('Eternity.txt', balancedTop.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity', Buffer.from(balancedTop.map(n => n.link).join('\n')).toString('base64'));
@@ -723,6 +824,17 @@ async function main() {
   fs.writeFileSync('high_speed_socks5.txt', verifiedSocks5.slice(0, 500).map(n => n.link).join('\n'));
   fs.writeFileSync('high_speed_socks4.txt', verifiedSocks4.slice(0, 500).map(n => n.link).join('\n'));
   fs.writeFileSync('high_speed_http.txt', verifiedHttp.slice(0, 500).map(n => n.link).join('\n'));
+
+  // 4.2 Xray 真验活专属产物（仅当可选阶段开启且产出）
+  fs.writeFileSync('all_xray_verified.txt', xrayVerified.map(n => n.link).join('\n'));
+  fs.writeFileSync('all_xray_verified_meta.json', JSON.stringify(xrayVerified.map(n => ({
+    link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
+    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_xray_verified'
+  })), null, 2));
+  fs.writeFileSync('high_speed_vless.txt', verifiedVless.slice(0, 500).map(n => n.link).join('\n'));
+  fs.writeFileSync('high_speed_vmess.txt', verifiedVmess.slice(0, 500).map(n => n.link).join('\n'));
+  fs.writeFileSync('high_speed_trojan.txt', verifiedTrojan.slice(0, 500).map(n => n.link).join('\n'));
+  fs.writeFileSync('high_speed_ss.txt', verifiedSs.slice(0, 500).map(n => n.link).join('\n'));
 
   // 5. 国别与协议分流
   for (const [c, links] of Object.entries(countryMap)) {
@@ -747,11 +859,17 @@ async function main() {
       socks4: verifiedSocks4.length,
       http: verifiedHttp.length,
     },
+    xray_l7_enabled: ENABLE_XRAY_L7,
+    xray_l7_verified_nodes: xrayVerified.length,
+    xray_l7_breakdown: {
+      vless: verifiedVless.length,
+      vmess: verifiedVmess.length,
+      trojan: verifiedTrojan.length,
+      ss: verifiedSs.length,
+    },
     high_speed_breakdown: {
       total: balancedTop.length,
-      socks5: pickS5.length,
-      socks4: pickS4.length,
-      http: pickHttp.length,
+      ...balancedByProto,
     },
     xray_alive_nodes: xrayAlive.length,
     conservation_check: sumCheck === rawList.length ? 'CONSERVED' : 'MISMATCH',
@@ -765,13 +883,15 @@ async function main() {
   console.log(`- all_exit.txt: ${alive.length} 节点 (全量 TCP 存活池)`);
   console.log(`- all_l7_verified.txt: ${l7Verified.length} 节点 (全量 L7 已验活池: S5=${verifiedSocks5.length}, S4=${verifiedSocks4.length}, HTTP=${verifiedHttp.length})`);
   console.log(`- xray_alive.txt: ${xrayAlive.length} 节点 (Xray TCP 存活待本地精验池)`);
-  console.log(`- high_speed.txt: ${balancedTop.length} 节点 (多协议均衡精选池: S5=${pickS5.length}, S4=${pickS4.length}, HTTP=${pickHttp.length})`);
+  if (xrayVerified.length > 0) {
+    console.log(`- all_xray_verified.txt: ${xrayVerified.length} 节点 (Xray 云端真验活池: vless=${verifiedVless.length}, vmess=${verifiedVmess.length}, trojan=${verifiedTrojan.length}, ss=${verifiedSs.length})`);
+  }
+  console.log(`- high_speed.txt: ${balancedTop.length} 节点 (多协议均衡精选池: ${JSON.stringify(balancedByProto)})`);
   console.log(`- high_speed_socks5.txt: ${verifiedSocks5.slice(0, 500).length} 节点`);
   console.log(`- high_speed_http.txt: ${verifiedHttp.slice(0, 500).length} 节点`);
   console.log(`- summary.json: 统计摘要报告 (守恒校验: ${summary.conservation_check})`);
   console.log(`- dist/by_country/: ${Object.keys(countryMap).length} 个国家地区分流`);
   console.log(`- dist/by_protocol/: ${Object.keys(protoMap).length} 个协议分流`);
-  console.log(`- summary.json: 统计摘要报告 (守恒校验: ${summary.conservation_check})`);
 }
 
 // 仅作为入口脚本执行时才跑主流程；被测试 harness require 时不启动网络任务
@@ -783,6 +903,6 @@ if (require.main === module) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     probeL7HttpRaw, probeL7HttpsRaw, probeL7Socks5Raw, probeL7Socks4Raw, probeL7,
-    extractAllCandidates, parseHostPort, runPool,
+    extractAllCandidates, parseHostPort, runPool, buildBalancedPool,
   };
 }
