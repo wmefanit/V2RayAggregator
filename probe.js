@@ -527,6 +527,29 @@ function roundRobinSample(perSourceLists, cap) {
   return out;
 }
 
+// ---------- 链接标准化清洗（兼容各类严格客户端与老版订阅解析器）----------
+function sanitizeProxyLink(rawLink) {
+  if (!rawLink || typeof rawLink !== 'string') return '';
+  let link = rawLink.trim();
+  if (!link) return '';
+  // 分离 # 备注部分
+  const hashIdx = link.indexOf('#');
+  if (hashIdx >= 0) {
+    const main = link.slice(0, hashIdx);
+    let tag = link.slice(hashIdx + 1).trim();
+    // 如果 tag 未做 percent-encode，对其非 ASCII 及空格进行转义，保留已有 %XX
+    try {
+      // 先尝试 decode 一次再 encode，避免双重转义
+      tag = encodeURIComponent(decodeURIComponent(tag));
+    } catch {
+      tag = encodeURIComponent(tag);
+    }
+    link = `${main}#${tag}`;
+  }
+  // 去除主体中可能误入的空格
+  return link.replace(/ /g, '%20');
+}
+
 // ---------- 多协议配额均衡挑选（纯函数，便于单测）----------
 // 先按各协议配额取优（保证协议代表性），再用全局最快剩余节点补足到 total。
 function buildBalancedPool(lists, quotas, total = 500) {
@@ -770,9 +793,11 @@ async function main() {
     `[${n.country || 'XX'}|${n.asn || '-'}|${n.rtt_ms}ms|${n.verification || 'tcp_only'}] ${n.link}`).join('\n'));
 
   // 2. 全量 L7 验活池 (HTTP/SOCKS 协议 100% 确认通断)
-  fs.writeFileSync('all_l7_verified.txt', l7Verified.map(n => n.link).join('\n'));
+  const l7CleanText = l7Verified.map((n) => sanitizeProxyLink(n.link)).filter(Boolean).join('\n');
+  fs.writeFileSync('all_l7_verified.txt', l7CleanText);
+  fs.writeFileSync('all_l7_verified_base64.txt', Buffer.from(l7CleanText).toString('base64'));
   fs.writeFileSync('all_l7_verified_meta.json', JSON.stringify(l7Verified.map(n => ({
-    link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
+    link: sanitizeProxyLink(n.link), proto: n.proto, ip: n.ip, port: n.port, country: n.country,
     tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_verified'
   })), null, 2));
 
@@ -812,13 +837,17 @@ async function main() {
     balancedByProto[p] = (balancedByProto[p] || 0) + 1;
   }
 
-  fs.writeFileSync('high_speed.txt', balancedTop.map(n => n.link).join('\n'));
+  const highSpeedCleanLinks = balancedTop.map((n) => sanitizeProxyLink(n.link)).filter(Boolean);
+  const highSpeedCleanText = highSpeedCleanLinks.join('\n');
+  fs.writeFileSync('high_speed.txt', highSpeedCleanText);
+  fs.writeFileSync('high_speed_base64.txt', Buffer.from(highSpeedCleanText).toString('base64'));
+  fs.writeFileSync('high_speed_b64.txt', Buffer.from(highSpeedCleanText).toString('base64'));
   fs.writeFileSync('high_speed_meta.json', JSON.stringify(balancedTop.map(n => ({
-    link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
+    link: sanitizeProxyLink(n.link), proto: n.proto, ip: n.ip, port: n.port, country: n.country,
     tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: n.verification || 'l7_verified'
   })), null, 2));
-  fs.writeFileSync('Eternity.txt', balancedTop.map(n => n.link).join('\n'));
-  fs.writeFileSync('Eternity', Buffer.from(balancedTop.map(n => n.link).join('\n')).toString('base64'));
+  fs.writeFileSync('Eternity.txt', highSpeedCleanText);
+  fs.writeFileSync('Eternity', Buffer.from(highSpeedCleanText).toString('base64'));
 
   // 4.1 独立单协议极速精选文件（供只消费特定协议的下游直取）
   fs.writeFileSync('high_speed_socks5.txt', verifiedSocks5.slice(0, 500).map(n => n.link).join('\n'));
@@ -826,15 +855,27 @@ async function main() {
   fs.writeFileSync('high_speed_http.txt', verifiedHttp.slice(0, 500).map(n => n.link).join('\n'));
 
   // 4.2 Xray 真验活专属产物（仅当可选阶段开启且产出）
-  fs.writeFileSync('all_xray_verified.txt', xrayVerified.map(n => n.link).join('\n'));
+  const xrayCleanLinks = xrayVerified.map((n) => sanitizeProxyLink(n.link)).filter(Boolean);
+  const xrayCleanText = xrayCleanLinks.join('\n');
+  fs.writeFileSync('all_xray_verified.txt', xrayCleanText);
+  fs.writeFileSync('all_xray_verified_base64.txt', Buffer.from(xrayCleanText).toString('base64'));
+  fs.writeFileSync('all_xray_verified_b64.txt', Buffer.from(xrayCleanText).toString('base64'));
   fs.writeFileSync('all_xray_verified_meta.json', JSON.stringify(xrayVerified.map(n => ({
-    link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
+    link: sanitizeProxyLink(n.link), proto: n.proto, ip: n.ip, port: n.port, country: n.country,
     tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_xray_verified'
   })), null, 2));
-  fs.writeFileSync('high_speed_vless.txt', verifiedVless.slice(0, 500).map(n => n.link).join('\n'));
-  fs.writeFileSync('high_speed_vmess.txt', verifiedVmess.slice(0, 500).map(n => n.link).join('\n'));
-  fs.writeFileSync('high_speed_trojan.txt', verifiedTrojan.slice(0, 500).map(n => n.link).join('\n'));
-  fs.writeFileSync('high_speed_ss.txt', verifiedSs.slice(0, 500).map(n => n.link).join('\n'));
+
+  const writeCleanAndB64 = (filename, list) => {
+    const text = list.map((n) => sanitizeProxyLink(n.link)).filter(Boolean).join('\n');
+    fs.writeFileSync(filename, text);
+    const b64Name = filename.replace(/\.txt$/, '_base64.txt');
+    fs.writeFileSync(b64Name, Buffer.from(text).toString('base64'));
+  };
+
+  writeCleanAndB64('high_speed_vless.txt', verifiedVless.slice(0, 500));
+  writeCleanAndB64('high_speed_vmess.txt', verifiedVmess.slice(0, 500));
+  writeCleanAndB64('high_speed_trojan.txt', verifiedTrojan.slice(0, 500));
+  writeCleanAndB64('high_speed_ss.txt', verifiedSs.slice(0, 500));
 
   // 5. 国别与协议分流
   for (const [c, links] of Object.entries(countryMap)) {
@@ -903,6 +944,6 @@ if (require.main === module) {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     probeL7HttpRaw, probeL7HttpsRaw, probeL7Socks5Raw, probeL7Socks4Raw, probeL7,
-    extractAllCandidates, parseHostPort, runPool, buildBalancedPool,
+    extractAllCandidates, parseHostPort, runPool, buildBalancedPool, sanitizeProxyLink,
   };
 }

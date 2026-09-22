@@ -151,10 +151,12 @@ jobs:
           ASSETS="all_exit.txt all_exit_meta.txt all_exit_base64.txt \
             all_l7_verified.txt all_l7_verified_meta.json \
             xray_alive.txt xray_alive_meta.json \
-            all_xray_verified.txt all_xray_verified_meta.json \
-            high_speed.txt high_speed_meta.json \
+            all_xray_verified.txt all_xray_verified_base64.txt all_xray_verified_b64.txt all_xray_verified_meta.json \
+            all_l7_verified_base64.txt \
+            high_speed.txt high_speed_base64.txt high_speed_b64.txt high_speed_meta.json \
             high_speed_socks5.txt high_speed_socks4.txt high_speed_http.txt \
-            high_speed_vless.txt high_speed_vmess.txt high_speed_trojan.txt high_speed_ss.txt \
+            high_speed_vless.txt high_speed_vless_base64.txt high_speed_vmess.txt high_speed_vmess_base64.txt \
+            high_speed_trojan.txt high_speed_trojan_base64.txt high_speed_ss.txt high_speed_ss_base64.txt \
             Eternity.txt summary.json \
             dist_country.tar.gz dist_protocol.tar.gz"
 
