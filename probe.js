@@ -13,10 +13,10 @@ const zlib = require('zlib');
 const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/all_sources.json';
 const OUT_DIR = './dist';
 const TCP_CONCURRENCY = parseInt(process.env.TCP_CONCURRENCY || '1200', 10);
+const L7_CONCURRENCY = parseInt(process.env.L7_CONCURRENCY || '800', 10);
 const DNS_CONCURRENCY = parseInt(process.env.DNS_CONCURRENCY || '300', 10);
-// 实测候选池：存活节点 TCP 握手平均 342ms，2s 超时有 5 倍余量，不会误杀跨洋节点；
-// 而 48.8% 是丢包型死节点会吃满超时，超时值直接决定总耗时（3.5s 会让整轮跑 2 小时）。
 const TCP_TIMEOUT_MS = parseInt(process.env.TCP_TIMEOUT_MS || '2000', 10);
+const L7_TIMEOUT_MS = parseInt(process.env.L7_TIMEOUT_MS || '2500', 10);
 const DNS_TIMEOUT_MS = parseInt(process.env.DNS_TIMEOUT_MS || '4000', 10);
 const MAX_CANDIDATES = parseInt(process.env.MAX_CANDIDATES || '0', 10);
 const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '20000', 10);
@@ -159,16 +159,13 @@ function countryFromRemark(remark) {
   return '';
 }
 
-// 纯 CDN ASN 黑名单正则 (若节点是裸 IP + 属于纯 CDN 边缘，则 80/443 仅为 CDN 静态握手，不可作为代理)
+// 仅标记 CDN ASN（不删除任何 TCP 存活节点，避免误杀 SNI/Host 转发型 Xray 代理）
 const PURE_CDN_ORG_REGEX = /^(CLOUDFLARENET|CLOUDFLARESPECTRUM|FASTLY|AKAMAI-AS|AKAMAI-ASN1|EDGECAST|IMPERVA|INCAPSULA)/i;
-function isCdnPseudoNode(host, org) {
-  if (!org || !PURE_CDN_ORG_REGEX.test(org)) return false;
-  // 如果是裸 IP 直接指向 CDN，必然是假节点
-  return net.isIP(host) !== 0;
+function isCdnOrg(org) {
+  return !!(org && PURE_CDN_ORG_REGEX.test(org));
 }
 
-// ---------- 原生 L7 轻量级真实验活 (HTTP CONNECT 与 SOCKS5) ----------
-// ---------- 原生 L7 轻量级真实验活 (带硬超时熔断，100% 杜绝 Promise 挂起) ----------
+// ---------- 原生 L7 轻量级真实验活 (带硬超时熔断 + 粘包/分片健壮处理) ----------
 function withHardTimeout(promise, timeoutMs) {
   let timer = null;
   const timeoutPromise = new Promise((resolve) => {
@@ -255,12 +252,17 @@ function probeL7Socks5Raw(ip, port, timeoutMs = 2500) {
     const start = Date.now();
     const sock = new net.Socket();
     let done = false;
+    let stage = 1;
+    let stageBuf = Buffer.alloc(0);
+    let httpBuf = '';
+
     const finish = (ok) => {
       if (done) return;
       done = true;
       try { sock.destroy(); } catch (e) {}
       resolve(ok ? Date.now() - start : null);
     };
+
     sock.setTimeout(timeoutMs);
     sock.once('timeout', () => finish(false));
     sock.once('error', () => finish(false));
@@ -269,12 +271,14 @@ function probeL7Socks5Raw(ip, port, timeoutMs = 2500) {
     sock.connect(port, ip, () => {
       sock.write(Buffer.from([0x05, 0x01, 0x00]));
     });
-    let stage = 1;
-    let buf = '';
+
     sock.on('data', (chunk) => {
       if (stage === 1) {
-        if (chunk.length >= 2 && chunk[0] === 0x05 && chunk[1] === 0x00) {
+        stageBuf = Buffer.concat([stageBuf, chunk]);
+        if (stageBuf.length < 2) return;
+        if (stageBuf[0] === 0x05 && stageBuf[1] === 0x00) {
           stage = 2;
+          stageBuf = stageBuf.slice(2);
           const host = Buffer.from('cp.cloudflare.com', 'ascii');
           const req = Buffer.concat([
             Buffer.from([0x05, 0x01, 0x00, 0x03, host.length]),
@@ -283,23 +287,52 @@ function probeL7Socks5Raw(ip, port, timeoutMs = 2500) {
           ]);
           sock.write(req);
         } else {
-          finish(false);
+          return finish(false);
         }
-      } else if (stage === 2) {
-        if (chunk.length >= 2 && chunk[0] === 0x05) {
-          if (chunk[1] !== 0x00) {
-            finish(false);
-            return;
+      }
+
+      if (stage === 2) {
+        if (chunk.length > 0 && stageBuf.length === 0) {
+          stageBuf = Buffer.concat([stageBuf, chunk]);
+        }
+        if (stageBuf.length < 4) return;
+        if (stageBuf[0] !== 0x05 || stageBuf[1] !== 0x00) {
+          return finish(false);
+        }
+
+        const atyp = stageBuf[3];
+        let replyLen = 0;
+        if (atyp === 0x01) {
+          replyLen = 4 + 4 + 2; // IPv4: 10B
+        } else if (atyp === 0x03) {
+          if (stageBuf.length < 5) return;
+          replyLen = 4 + 1 + stageBuf[4] + 2; // Domain
+        } else if (atyp === 0x04) {
+          replyLen = 4 + 16 + 2; // IPv6: 22B
+        } else {
+          return finish(false);
+        }
+
+        if (stageBuf.length < replyLen) return;
+
+        const extraData = stageBuf.slice(replyLen);
+        stage = 3;
+        stageBuf = Buffer.alloc(0);
+        sock.write('GET /generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
+        if (extraData.length > 0) {
+          httpBuf += extraData.toString('utf8');
+          if (httpBuf.includes('204 No Content') || httpBuf.includes('HTTP/1.1 204') || httpBuf.includes('HTTP/1.0 204')) {
+            return finish(true);
           }
-          stage = 3;
-          buf = '';
-          sock.write('GET /generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
         }
-      } else if (stage === 3) {
-        buf += chunk.toString('utf8');
-        if (buf.includes('204 No Content') || buf.includes('HTTP/1.1 204') || buf.includes('HTTP/1.0 204')) {
+        return;
+      }
+
+      if (stage === 3) {
+        httpBuf += chunk.toString('utf8');
+        if (httpBuf.includes('204 No Content') || httpBuf.includes('HTTP/1.1 204') || httpBuf.includes('HTTP/1.0 204')) {
           finish(true);
-        } else if (buf.length > 2000 || buf.includes('400 Bad Request') || buf.includes('403 Forbidden') || buf.includes('502 Bad Gateway')) {
+        } else if (httpBuf.length > 2000 || httpBuf.includes('400 Bad Request') || httpBuf.includes('403 Forbidden') || httpBuf.includes('502 Bad Gateway')) {
           finish(false);
         }
       }
@@ -307,25 +340,28 @@ function probeL7Socks5Raw(ip, port, timeoutMs = 2500) {
   });
 }
 
-// SOCKS4a（变种：域名字段用 0.0.0.x 占位 + 末尾域名串），兼容不支持 SOCKS5 的老代理
 function probeL7Socks4Raw(ip, port, timeoutMs = 2500) {
   return new Promise((resolve) => {
     const start = Date.now();
     const sock = new net.Socket();
     let done = false;
+    let stage = 1;
+    let stageBuf = Buffer.alloc(0);
+    let httpBuf = '';
+
     const finish = (ok) => {
       if (done) return;
       done = true;
       try { sock.destroy(); } catch (e) {}
       resolve(ok ? Date.now() - start : null);
     };
+
     sock.setTimeout(timeoutMs);
     sock.once('timeout', () => finish(false));
     sock.once('error', () => finish(false));
     sock.once('close', () => finish(false));
 
     sock.connect(port, ip, () => {
-      // SOCKS4a: [4, 1, 端口, 0.0.0.1, 用户ID+0x00, 域名+0x00]
       const host = Buffer.from('cp.cloudflare.com', 'ascii');
       const req = Buffer.concat([
         Buffer.from([0x04, 0x01, 0x00, 0x50, 0x00, 0x00, 0x00, 0x01, 0x00]),
@@ -334,25 +370,32 @@ function probeL7Socks4Raw(ip, port, timeoutMs = 2500) {
       ]);
       sock.write(req);
     });
-    let stage = 1;
-    let buf = '';
+
     sock.on('data', (chunk) => {
       if (stage === 1) {
-        if (chunk.length >= 1) {
-          if (chunk[0] !== 0x00) { finish(false); return; } // VN 必须为 0
-          if (chunk.length >= 2 && chunk[1] === 0x5a) {
-            stage = 2;
-            buf = '';
-            sock.write('GET /generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
-          } else {
-            finish(false); // CD=90 (granted) 之外一律死
+        stageBuf = Buffer.concat([stageBuf, chunk]);
+        if (stageBuf.length < 8) return;
+        if (stageBuf[0] !== 0x00 || stageBuf[1] !== 0x5a) {
+          return finish(false);
+        }
+        const extraData = stageBuf.slice(8);
+        stage = 2;
+        stageBuf = Buffer.alloc(0);
+        sock.write('GET /generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
+        if (extraData.length > 0) {
+          httpBuf += extraData.toString('utf8');
+          if (httpBuf.includes('204 No Content') || httpBuf.includes('HTTP/1.1 204') || httpBuf.includes('HTTP/1.0 204')) {
+            return finish(true);
           }
         }
-      } else if (stage === 2) {
-        buf += chunk.toString('utf8');
-        if (buf.includes('204 No Content') || buf.includes('HTTP/1.1 204') || buf.includes('HTTP/1.0 204')) {
+        return;
+      }
+
+      if (stage === 2) {
+        httpBuf += chunk.toString('utf8');
+        if (httpBuf.includes('204 No Content') || httpBuf.includes('HTTP/1.1 204') || httpBuf.includes('HTTP/1.0 204')) {
           finish(true);
-        } else if (buf.length > 2000 || buf.includes('400 Bad Request') || buf.includes('403 Forbidden') || buf.includes('502 Bad Gateway')) {
+        } else if (httpBuf.length > 2000 || httpBuf.includes('400 Bad Request') || httpBuf.includes('403 Forbidden') || httpBuf.includes('502 Bad Gateway')) {
           finish(false);
         }
       }
@@ -360,34 +403,32 @@ function probeL7Socks4Raw(ip, port, timeoutMs = 2500) {
   });
 }
 
-// 统一入口：每个探针均受 withHardTimeout(3500ms) 强力看门狗保护，绝不挂起
 async function probeL7(proto, ip, port) {
   const p = (proto || '').toLowerCase();
   if (p === 'http') {
-    const ms = await withHardTimeout(probeL7HttpRaw(ip, port, 2500), 3000);
+    const ms = await withHardTimeout(probeL7HttpRaw(ip, port, L7_TIMEOUT_MS), L7_TIMEOUT_MS + 500);
     return ms !== null ? { okMs: ms, scheme: 'http' } : null;
   }
   if (p === 'https') {
-    const r = await withHardTimeout(probeL7HttpsRaw(ip, port, 2500), 3000);
+    const r = await withHardTimeout(probeL7HttpsRaw(ip, port, L7_TIMEOUT_MS), L7_TIMEOUT_MS + 500);
     if (r && r.ok) return { okMs: r.ms, scheme: 'https' };
     if (r && r.plainFallback) {
-      const ms = await withHardTimeout(probeL7HttpRaw(ip, port, 2500), 3000);
+      const ms = await withHardTimeout(probeL7HttpRaw(ip, port, L7_TIMEOUT_MS), L7_TIMEOUT_MS + 500);
       if (ms !== null) return { okMs: ms, scheme: 'http' };
     }
     return null;
   }
   if (p === 'socks5') {
-    const ms = await withHardTimeout(probeL7Socks5Raw(ip, port, 2500), 3000);
+    const ms = await withHardTimeout(probeL7Socks5Raw(ip, port, L7_TIMEOUT_MS), L7_TIMEOUT_MS + 500);
     return ms !== null ? { okMs: ms, scheme: 'socks5' } : null;
   }
   if (p === 'socks4') {
-    const ms = await withHardTimeout(probeL7Socks4Raw(ip, port, 2500), 3000);
+    const ms = await withHardTimeout(probeL7Socks4Raw(ip, port, L7_TIMEOUT_MS), L7_TIMEOUT_MS + 500);
     return ms !== null ? { okMs: ms, scheme: 'socks4' } : null;
   }
   return null;
 }
 
-// 单次 TCP 握手探测
 function tcpProbeOnce(ip, port, timeoutMs) {
   return new Promise((resolve) => {
     const start = Date.now();
@@ -407,8 +448,6 @@ function tcpProbeOnce(ip, port, timeoutMs) {
   });
 }
 
-// 单次 TCP 握手探测。不做盲重试：实测 48.8% 候选是丢包型死节点，
-// 盲重试只会让每个死节点多耗一次完整超时（这是上一轮跑满 2 小时的主因）。
 async function tcpProbe(ip, port) {
   return await tcpProbeOnce(ip, port, TCP_TIMEOUT_MS);
 }
@@ -475,14 +514,17 @@ async function main() {
 
   console.log(`\n=== [2/4] 启动 ${TCP_CONCURRENCY} 高并发分块拨测 (块大小: ${CHUNK_SIZE}, 超时: ${TCP_TIMEOUT_MS}ms) ===`);
   const alive = [];
-  let parsedTotal = 0, probeTotal = 0, dnsMs = 0, tcpMs = 0, cdnSkipped = 0;
+  let parsedTotal = 0, probeTotal = 0, dnsMs = 0, tcpMs = 0, cdnMarked = 0;
+  let parseFailed = 0, dnsFailed = 0, tcpFailed = 0;
   let tcpT0 = 0;
+
   for (let off = 0; off < rawList.length; off += CHUNK_SIZE) {
     const chunk = rawList.slice(off, off + CHUNK_SIZE);
     const parsed = [];
     for (const link of chunk) {
       const ep = parseHostPort(link);
       if (ep && ep.port > 0 && ep.port < 65536) parsed.push({ link, ep });
+      else parseFailed++;
     }
     parsedTotal += parsed.length;
 
@@ -494,19 +536,19 @@ async function main() {
     }
     dnsMs += Date.now() - dnsT0;
 
-    const tasks = parsed.map(x => ({ ...x, ip: net.isIP(x.ep.host) ? x.ep.host : dnsCache.get(x.ep.host) })).filter(x => x.ip);
+    const tasks = [];
+    for (const x of parsed) {
+      const ip = net.isIP(x.ep.host) ? x.ep.host : dnsCache.get(x.ep.host);
+      if (ip) tasks.push({ ...x, ip });
+      else dnsFailed++;
+    }
     probeTotal += tasks.length;
     tcpT0 = Date.now();
 
     const probed = await runPool(tasks, async (item) => {
       const geo = lookupAsn(item.ip);
       const org = geo ? geo.org : '';
-      // 阶段 0 纯静态拦截：裸 IP + 纯 CDN ASN 的假节点直接拦截，不消耗 TCP 探测资源
-      if (isCdnPseudoNode(item.ep.host, org)) {
-        cdnSkipped++;
-        return null;
-      }
-
+      // 不丢弃任何 TCP 存活节点：CDN ASN 仅打标，避免漏掉借 CDN 转发的 Xray 代理
       const rtt = await tcpProbe(item.ip, item.ep.port);
       if (rtt !== null) {
         return {
@@ -521,56 +563,73 @@ async function main() {
           org: org,
           country_source: geo && geo.country ? 'asn_db' : 'remark',
           rtt_ms: rtt,
+          cdn_edge: isCdnOrg(org),
         };
       }
       return null;
     }, TCP_CONCURRENCY);
 
-    for (const p of probed) if (p) alive.push(p);
+    let aliveAdded = 0;
+    for (const p of probed) {
+      if (p) {
+        alive.push(p);
+        aliveAdded++;
+        if (p.cdn_edge) cdnMarked++;
+      }
+    }
+    tcpFailed += tasks.length - aliveAdded;
     tcpMs += Date.now() - tcpT0;
+
     const progress = Math.min(off + CHUNK_SIZE, rawList.length);
     const elapsed = Math.round((Date.now() - t0) / 1000);
     const speed = Math.round(probeTotal / Math.max(1, elapsed));
     console.log(`  进度: ${progress} / ${rawList.length} | 累计存活: ${alive.length} | 速率: ~${speed} 端点/秒`);
   }
 
-  console.log(`\n探活完成: 存活可用数 ${alive.length} / ${probeTotal} (耗时: ${Math.round((Date.now() - t0) / 1000)}s)`);
-  console.log(`  阶段耗时拆解: DNS=${(dnsMs/1000).toFixed(1)}s  TCP=${(tcpMs/1000).toFixed(1)}s  CDN静态拦截=${cdnSkipped} 个`);
+  const l4Sec = Math.round((Date.now() - t0) / 1000);
+  const sumCheck = parseFailed + dnsFailed + tcpFailed + alive.length;
+  console.log(`\nL4 探活完成: TCP存活 ${alive.length} / 待探测 ${probeTotal} (耗时: ${l4Sec}s)`);
+  console.log(`  计数守恒校验: 去重候选 ${rawList.length} = 解析失败 ${parseFailed} + DNS失败 ${dnsFailed} + TCP不通 ${tcpFailed} + TCP存活 ${alive.length} (合计 ${sumCheck}) → ${sumCheck === rawList.length ? '100% 守恒' : '存在未计漏检!'}`);
+  console.log(`  阶段耗时拆解: DNS=${(dnsMs/1000).toFixed(1)}s  TCP=${(tcpMs/1000).toFixed(1)}s  CDN边缘标记=${cdnMarked} 个 (未删除)`);
   alive.sort((a, b) => a.rtt_ms - b.rtt_ms);
 
-  // === [2.5/4] 对低延迟候选节点执行 L7 深度验活（按真实 L7 业务延迟量化“高速”）===
-  console.log('\n=== [2.5/4] 对候选节点执行 L7 隧道真实验活 (填充 500 高速可用池) ===');
-  // 扩大 L7 候选范围：前 6000 个低延迟存活节点，保证能验出足够填满高速度池的真实可用节点
-  const l7Candidates = alive.slice(0, 6000);
+  // === [2.5/4] 对全量 TCP 存活节点做小字节 204 协议通断 (不做带宽测速) ===
+  console.log(`\n=== [2.5/4] 启动 ${L7_CONCURRENCY} 并发对全量 ${alive.length} 个存活节点做 204 协议通断 ===`);
+  const l7T0 = Date.now();
   const l7Verified = [];
-  await runPool(l7Candidates, async (item) => {
+  let l7Attempted = 0, l7Passed = 0, l7Failed = 0;
+
+  await runPool(alive, async (item) => {
     const p = (item.proto || '').toLowerCase();
     if (p === 'http' || p === 'https' || p === 'socks5' || p === 'socks4') {
+      l7Attempted++;
       const r = await probeL7(p, item.ip, item.port);
       if (r !== null) {
-        item.l7_verified = true;
-        item.l7_rtt_ms = r.okMs; // 记录包含 DNS+TCP+L7 204 回传的完整业务耗时
+        item.verification = 'l7_204';
+        item.l7_rtt_ms = r.okMs; // 记录 DNS+TCP+204 回传业务延迟
         if (p === 'https' && r.scheme === 'http') {
           item.link = item.link.replace(/^https:\/\//, 'http://');
           item.proto = 'http';
         }
-        if (p === 'https' && r.scheme === 'https') {
-          item.link = item.link.replace(/^https:\/\//, 'https://');
-        }
+        l7Passed++;
         l7Verified.push(item);
       } else {
-        item.l7_verified = false;
+        // 204 不通的节点仍保留在全量 TCP 存活池中（绝不物理删除，标记 tcp_only）
+        item.verification = 'tcp_only';
+        l7Failed++;
       }
     } else {
-      item.l7_verified = null;
+      // Xray 协议（vless/vmess/trojan/ss）云端仅能确认 TCP 可达；全部保留在 xray_alive 待本地 strictprobe 精验
+      item.verification = 'tcp_only';
     }
-  }, 120);
+  }, L7_CONCURRENCY);
 
-  // “高速”的真实量化：100% 优先按 L7 真实响应延迟（l7_rtt_ms）升序严格重排！
+  // L7 验证池按真实 204 响应延迟升序严格排序
   l7Verified.sort((a, b) => (a.l7_rtt_ms || 9999) - (b.l7_rtt_ms || 9999));
-  console.log(`  L7 验活完成: ${l7Verified.length} 个真实可用代理 (已按真实 L7 延迟重排)`);
+  const l7Sec = Math.round((Date.now() - l7T0) / 1000);
+  console.log(`  协议通断完成: 尝试 ${l7Attempted} 个直接代理，${l7Passed} 个通过 204 (不通 ${l7Failed})，耗时 ${l7Sec}s`);
 
-  console.log('\n=== [3/4] 导出多场景结构化分流订阅 ===');
+  console.log('\n=== [3/4] 导出分层结构化产物 ===');
   fs.rmSync(OUT_DIR, { recursive: true, force: true });
   fs.mkdirSync(path.join(OUT_DIR, 'by_country'), { recursive: true });
   fs.mkdirSync(path.join(OUT_DIR, 'by_protocol'), { recursive: true });
@@ -581,66 +640,74 @@ async function main() {
     (protoMap[n.proto] = protoMap[n.proto] || []).push(n.link);
   }
 
-  // 1. 全量多出口池
+  // 1. 全量多出口池 (包含全部 TCP 存活节点，一个不丢)
   fs.writeFileSync('all_exit.json', JSON.stringify(alive, null, 2));
   fs.writeFileSync('all_exit.txt', alive.map(n => n.link).join('\n'));
   fs.writeFileSync('all_exit_base64.txt', Buffer.from(alive.map(n => n.link).join('\n')).toString('base64'));
   fs.writeFileSync('all_exit_meta.txt', alive.map(n =>
-    `[${n.country || 'XX'}|${n.asn || '-'}|${n.rtt_ms}ms] ${n.link}`).join('\n'));
+    `[${n.country || 'XX'}|${n.asn || '-'}|${n.rtt_ms}ms|${n.verification || 'tcp_only'}] ${n.link}`).join('\n'));
 
-  // 2. 真实优质高速池 (100% 优先填满 L7 验活节点，真实 L7 延迟在前，降序严格保序)
-  // 白名单收紧：仅允许 Xray 系协议（vless/vmess/trojan/ss）以未验活身份入列 high_speed，
-  // socks4 等必须通过 L7 验活（防止未验活死节点混入）
-  const XRAY_PROTOS = new Set(['vless', 'vmess', 'trojan', 'ss']);
-  const xrayCandidates = alive.filter(n => n.l7_verified === null && XRAY_PROTOS.has((n.proto || '').toLowerCase()));
-  const topFast = [...l7Verified, ...xrayCandidates].slice(0, 500);
-  
+  // 2. 全量 L7 验活池 (HTTP/SOCKS 协议 100% 确认通断)
+  fs.writeFileSync('all_l7_verified.txt', l7Verified.map(n => n.link).join('\n'));
+  fs.writeFileSync('all_l7_verified_meta.json', JSON.stringify(l7Verified.map(n => ({
+    link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
+    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_204'
+  })), null, 2));
+
+  // 3. Xray 待验池 (云端已确认为 TCP 存活的 Xray 节点，供本地快速精验)
+  const XRAY_PROTOS = new Set(['vless', 'vmess', 'trojan', 'ss', 'ssr']);
+  const xrayAlive = alive.filter(n => XRAY_PROTOS.has((n.proto || '').toLowerCase()));
+  fs.writeFileSync('xray_alive.txt', xrayAlive.map(n => n.link).join('\n'));
+  fs.writeFileSync('xray_alive_meta.json', JSON.stringify(xrayAlive.map(n => ({
+    link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
+    tcp_rtt_ms: n.rtt_ms, verification: 'tcp_only'
+  })), null, 2));
+
+  // 4. 高速推荐池 (仅限 100% 通过 204 验证的节点，按延迟排序，不再混入未验证 Xray 节点)
+  const topFast = l7Verified.slice(0, 500);
   fs.writeFileSync('high_speed.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('high_speed_meta.json', JSON.stringify(topFast.map(n => ({
-    link: n.link,
-    proto: n.proto,
-    ip: n.ip,
-    port: n.port,
-    country: n.country,
-    tcp_rtt_ms: n.rtt_ms,
-    l7_rtt_ms: n.l7_rtt_ms || null,
-    l7_verified: n.l7_verified === true,
+    link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
+    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_204'
   })), null, 2));
   fs.writeFileSync('Eternity.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity', Buffer.from(topFast.map(n => n.link).join('\n')).toString('base64'));
 
-  // 3. 国别分流
+  // 5. 国别与协议分流
   for (const [c, links] of Object.entries(countryMap)) {
     fs.writeFileSync(path.join(OUT_DIR, 'by_country', `${c.toLowerCase()}.txt`), links.join('\n'));
   }
-
-  // 4. 协议分流
   for (const [p, links] of Object.entries(protoMap)) {
     fs.writeFileSync(path.join(OUT_DIR, 'by_protocol', `${p.toLowerCase()}.txt`), links.join('\n'));
   }
 
-  // 5. 总体报告
+  // 6. 总体报告
   const summary = {
     updated_at: new Date().toISOString(),
     total_fetched_raw: totalFetched,
-    sampled_candidates: rawList.length,
-    valid_endpoints: parsedTotal,
-    dns_resolved_and_probed: probeTotal,
-    alive_nodes: alive.length,
+    deduped_candidates: rawList.length,
+    parse_failed: parseFailed,
+    dns_failed: dnsFailed,
+    tcp_failed: tcpFailed,
+    tcp_alive_nodes: alive.length,
     l7_verified_nodes: l7Verified.length,
-    top_fast_nodes: topFast.length,
+    xray_alive_nodes: xrayAlive.length,
+    high_speed_nodes: topFast.length,
+    conservation_check: sumCheck === rawList.length ? 'CONSERVED' : 'MISMATCH',
     countries: Object.fromEntries(Object.entries(countryMap).map(([k, v]) => [k, v.length])),
     protocols: Object.fromEntries(Object.entries(protoMap).map(([k, v]) => [k, v.length])),
     elapsed_seconds: Math.round((Date.now() - t0) / 1000),
   };
   fs.writeFileSync('summary.json', JSON.stringify(summary, null, 2));
 
-  console.log('🎉 订阅产物导出完成：');
-  console.log(`- all_exit.txt: ${alive.length} 节点 (全量多出口池)`);
-  console.log(`- high_speed.txt: ${topFast.length} 节点 (含 ${l7Verified.length} 个 L7 真实验活节点)`);
+  console.log('🎉 分层产物导出完成：');
+  console.log(`- all_exit.txt: ${alive.length} 节点 (全量 TCP 存活池)`);
+  console.log(`- all_l7_verified.txt: ${l7Verified.length} 节点 (全量 L7 204 已验活池)`);
+  console.log(`- xray_alive.txt: ${xrayAlive.length} 节点 (Xray TCP 存活待本地精验池)`);
+  console.log(`- high_speed.txt: ${topFast.length} 节点 (Top 500 低延迟已验活推荐池)`);
   console.log(`- dist/by_country/: ${Object.keys(countryMap).length} 个国家地区分流`);
   console.log(`- dist/by_protocol/: ${Object.keys(protoMap).length} 个协议分流`);
-  console.log(`- summary.json: 统计摘要报告`);
+  console.log(`- summary.json: 统计摘要报告 (守恒校验: ${summary.conservation_check})`);
 }
 
 main().catch((e) => { console.error(e); process.exit(1); });

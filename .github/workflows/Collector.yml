@@ -8,7 +8,7 @@ on:
         required: false
         default: 'sub/all_sources.json'
       max_candidates:
-        description: '最大探测候选数 (0 = 全量无上限)'
+        description: '最大探测候选数 (0 = 全量无上限；非 0 视为冒烟测试，只发 smoke-test 预发布，绝不覆盖 latest)'
         required: false
         default: '0'
   schedule:
@@ -36,13 +36,32 @@ jobs:
         run: |
           ulimit -n 65535 || true
 
+      # 冒烟运行（max_candidates != 0）只做验证，产物写到 smoke-test 预发布 tag；
+      # 正式全量运行（max_candidates == 0，含定时任务）才写 latest，防止小样本污染正式订阅。
+      - name: Resolve Release Target
+        id: target
+        env:
+          MAX_CANDIDATES: ${{ github.event.inputs.max_candidates || '0' }}
+        run: |
+          if [ "$MAX_CANDIDATES" = "0" ]; then
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "mode=FULL (发布到 latest 正式订阅)" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=smoke-test" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "mode=SMOKE (仅发布到 smoke-test 预发布，不动 latest)" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run Million Prober (Azure Bandwidth)
         env:
           SOURCES_FILE: ${{ github.event.inputs.sources_file || 'sub/all_sources.json' }}
           MAX_CANDIDATES: ${{ github.event.inputs.max_candidates || '0' }}
           TCP_CONCURRENCY: "1200"
+          L7_CONCURRENCY: "800"
           DNS_CONCURRENCY: "300"
           TCP_TIMEOUT_MS: "2000"
+          L7_TIMEOUT_MS: "2500"
           CHUNK_SIZE: "20000"
         run: |
           node probe.js "$SOURCES_FILE"
@@ -59,47 +78,71 @@ jobs:
       - name: Publish / Overwrite GitHub Release (Zero Git Repo Bloat)
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.target.outputs.tag }}
+          PRERELEASE: ${{ steps.target.outputs.prerelease }}
+          RUN_MODE: ${{ steps.target.outputs.mode }}
         run: |
           set -e
           NOW=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
-          ALIVE_COUNT=$(grep -c '^[a-zA-Z0-9]' all_exit.txt 2>/dev/null || echo "0")
-          
-          # 创建 Release Notes
+          REPO="${{ github.repository }}"
+          TCP_ALIVE=$(grep -c '^[a-zA-Z0-9]' all_exit.txt 2>/dev/null || echo "0")
+          L7_VERIFIED=$(grep -c '^[a-zA-Z0-9]' all_l7_verified.txt 2>/dev/null || echo "0")
+          XRAY_ALIVE=$(grep -c '^[a-zA-Z0-9]' xray_alive.txt 2>/dev/null || echo "0")
+          CONSERVATION=$(node -e "console.log(require('./summary.json').conservation_check||'UNKNOWN')" 2>/dev/null || echo "UNKNOWN")
+
           cat << EOF > release_notes.md
           ## 🚀 Million-Scale Multi-Exit Proxy Pool (Auto-Updated)
-          
+
+          - **Run Mode**: \`${RUN_MODE}\`
           - **Last Updated**: \`${NOW}\`
-          - **Alive Proxy Count**: \`${ALIVE_COUNT}\` Verified Active Nodes
           - **Update Frequency**: Every 6 Hours (00:00, 06:00, 12:00, 18:00 UTC)
-          - **Verification Method**: High-concurrency TCP live handshake + Offline ASN database geolocation
-          
+          - **Conservation Check**: \`${CONSERVATION}\`
+
+          ### 📊 Pool Sizes (分层口径)
+          - **TCP Alive Pool**: \`${TCP_ALIVE}\` 节点（TCP 握手可达，未做协议验证）
+          - **L7 Verified Pool (HTTP/SOCKS)**: \`${L7_VERIFIED}\` 节点（204 协议通断已确认）
+          - **Xray TCP-Alive Pool**: \`${XRAY_ALIVE}\` 节点（云端仅确认 TCP 可达，需本地 strictprobe 精验）
+
+          ### 🔍 验证等级说明（避免口径混淆）
+          - \`all_exit.txt\`：TCP 可达。**不等于可用**，仅表示端口能建立 TCP 连接。
+          - \`all_l7_verified.txt\`：通过 HTTP CONNECT / SOCKS4 / SOCKS5 隧道向 cp.cloudflare.com 取得 204。**协议层可用**。
+          - \`xray_alive.txt\`：VLESS/VMess/Trojan/SS 的 TCP 可达节点。云端无协议执行核心，**未做协议验证**，需本地精验。
+          - \`high_speed.txt\`：从 \`all_l7_verified\` 中按 204 实测响应延迟升序取前 500。**注意：这是延迟排序，不是带宽测速**。
+          - 本流水线**不做下载带宽测速**（百万池带宽测试流量与耗时不可控），带宽由本地按需复验。
+
           ### 📥 Direct Subscription & Download Links:
-          - **Full Multi-Exit Pool (200k+ Nodes)**: [\`all_exit.txt\`](https://github.com/${{ github.repository }}/releases/download/latest/all_exit.txt)
-          - **Full Pool with Geo & Latency Meta**: [\`all_exit_meta.txt\`](https://github.com/${{ github.repository }}/releases/download/latest/all_exit_meta.txt)
-          - **High-Speed Top 500 Pool**: [\`high_speed.txt\`](https://github.com/${{ github.repository }}/releases/download/latest/high_speed.txt)
-          - **Base64 Subscription**: [\`Eternity.txt\`](https://github.com/${{ github.repository }}/releases/download/latest/Eternity.txt)
-          - **Summary Metrics**: [\`summary.json\`](https://github.com/${{ github.repository }}/releases/download/latest/summary.json)
-          - **Country Bundles (150+ Countries)**: [\`dist_country.tar.gz\`](https://github.com/${{ github.repository }}/releases/download/latest/dist_country.tar.gz)
+          - **Full TCP-Alive Pool**: [\`all_exit.txt\`](https://github.com/${REPO}/releases/download/${RELEASE_TAG}/all_exit.txt)
+          - **Full Pool with Geo & Verification Meta**: [\`all_exit_meta.txt\`](https://github.com/${REPO}/releases/download/${RELEASE_TAG}/all_exit_meta.txt)
+          - **L7 Verified Pool (HTTP/SOCKS)**: [\`all_l7_verified.txt\`](https://github.com/${REPO}/releases/download/${RELEASE_TAG}/all_l7_verified.txt)
+          - **Xray TCP-Alive Pool**: [\`xray_alive.txt\`](https://github.com/${REPO}/releases/download/${RELEASE_TAG}/xray_alive.txt)
+          - **Low-Latency Top 500 (L7 verified)**: [\`high_speed.txt\`](https://github.com/${REPO}/releases/download/${RELEASE_TAG}/high_speed.txt)
+          - **Base64 Subscription**: [\`Eternity.txt\`](https://github.com/${REPO}/releases/download/${RELEASE_TAG}/Eternity.txt)
+          - **Summary Metrics**: [\`summary.json\`](https://github.com/${REPO}/releases/download/${RELEASE_TAG}/summary.json)
+          - **Country Bundles**: [\`dist_country.tar.gz\`](https://github.com/${REPO}/releases/download/${RELEASE_TAG}/dist_country.tar.gz)
           EOF
 
-          # 首次运行创建 Release，之后每次覆盖资产（Git 仓库零增长）
-          gh release view latest >/dev/null 2>&1 \
-            || gh release create latest --target master \
-                 --title "Latest Multi-Exit Proxy Pool" \
-                 --notes-file release_notes.md
+          ASSETS="all_exit.txt all_exit_meta.txt all_exit_base64.txt \
+            all_l7_verified.txt all_l7_verified_meta.json \
+            xray_alive.txt xray_alive_meta.json \
+            high_speed.txt high_speed_meta.json \
+            Eternity.txt summary.json \
+            dist_country.tar.gz dist_protocol.tar.gz"
 
-          gh release upload latest \
-            all_exit.txt \
-            all_exit_meta.txt \
-            all_exit_base64.txt \
-            high_speed.txt \
-            high_speed_meta.json \
-            Eternity.txt \
-            summary.json \
-            dist_country.tar.gz \
-            dist_protocol.tar.gz \
-            --clobber
+          if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release upload "$RELEASE_TAG" $ASSETS --clobber
+          else
+            if [ "$PRERELEASE" = "true" ]; then
+              gh release create "$RELEASE_TAG" --target master --prerelease \
+                --title "Smoke Test Pool (${NOW})" --notes-file release_notes.md
+            else
+              gh release create "$RELEASE_TAG" --target master \
+                --title "Latest Multi-Exit Proxy Pool" --notes-file release_notes.md
+            fi
+            gh release upload "$RELEASE_TAG" $ASSETS --clobber
+          fi
 
-          gh release edit latest \
-            --title "Latest Multi-Exit Proxy Pool (${NOW})" \
+          gh release edit "$RELEASE_TAG" \
+            --title "$([ "$PRERELEASE" = "true" ] && echo "Smoke Test Pool" || echo "Latest Multi-Exit Proxy Pool") (${NOW})" \
             --notes-file release_notes.md
+
+          echo "已发布到 tag=${RELEASE_TAG} (prerelease=${PRERELEASE})"
