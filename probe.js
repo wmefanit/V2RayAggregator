@@ -5,6 +5,7 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const net = require('net');
+const tls = require('tls');
 const dns = require('dns').promises;
 const url = require('url');
 const zlib = require('zlib');
@@ -167,8 +168,19 @@ function isCdnPseudoNode(host, org) {
 }
 
 // ---------- 原生 L7 轻量级真实验活 (HTTP CONNECT 与 SOCKS5) ----------
-// ---------- 原生 L7 轻量级真实验活 (标准 HTTP 正向代理 与 SOCKS5) ----------
-function probeL7Http(ip, port, timeoutMs = 3000) {
+// ---------- 原生 L7 轻量级真实验活 (带硬超时熔断，100% 杜绝 Promise 挂起) ----------
+function withHardTimeout(promise, timeoutMs) {
+  let timer = null;
+  const timeoutPromise = new Promise((resolve) => {
+    timer = setTimeout(() => resolve(null), timeoutMs);
+  });
+  return Promise.race([
+    promise.finally(() => { if (timer) clearTimeout(timer); }),
+    timeoutPromise
+  ]);
+}
+
+function probeL7HttpRaw(ip, port, timeoutMs = 2500) {
   return new Promise((resolve) => {
     const start = Date.now();
     const sock = new net.Socket();
@@ -185,7 +197,6 @@ function probeL7Http(ip, port, timeoutMs = 3000) {
     sock.once('close', () => finish(false));
 
     sock.connect(port, ip, () => {
-      // 向正向代理发送绝对 URL 请求探测 Cloudflare 204 生成端点
       const req = 'GET http://cp.cloudflare.com/generate_204 HTTP/1.1\r\n' +
                   'Host: cp.cloudflare.com\r\n' +
                   'User-Agent: curl/8.5.0\r\n' +
@@ -197,7 +208,6 @@ function probeL7Http(ip, port, timeoutMs = 3000) {
     let buf = '';
     sock.on('data', (chunk) => {
       buf += chunk.toString('utf8');
-      // 真实 HTTP 代理必须正确带回 Cloudflare 的 204 No Content 响应头
       if (buf.includes('204 No Content') || buf.includes('HTTP/1.1 204') || buf.includes('HTTP/1.0 204')) {
         finish(true);
       } else if (buf.length > 2000 || buf.includes('400 Bad Request') || buf.includes('403 Forbidden') || buf.includes('502 Bad Gateway')) {
@@ -207,7 +217,40 @@ function probeL7Http(ip, port, timeoutMs = 3000) {
   });
 }
 
-function probeL7Socks5(ip, port, timeoutMs = 3000) {
+function probeL7HttpsRaw(ip, port, timeoutMs = 2500) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    let done = false;
+    let sock = null;
+    const finish = (ok, plainFallback) => {
+      if (done) return;
+      done = true;
+      try { if (sock) sock.destroy(); } catch (e) {}
+      resolve({ ok, ms: ok ? Date.now() - start : null, plainFallback });
+    };
+    try {
+      sock = tls.connect({ host: ip, port, rejectUnauthorized: false, timeout: timeoutMs }, () => {
+        sock.write('GET http://cp.cloudflare.com/generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
+      });
+    } catch (e) {
+      return finish(false, true);
+    }
+    let buf = '';
+    sock.on('timeout', () => finish(false, false));
+    sock.on('error', () => finish(false, true));
+    sock.on('close', () => finish(false, false));
+    sock.on('data', (chunk) => {
+      buf += chunk.toString('utf8');
+      if (buf.includes('204 No Content') || buf.includes('HTTP/1.1 204') || buf.includes('HTTP/1.0 204')) {
+        finish(true, false);
+      } else if (buf.length > 2000) {
+        finish(false, false);
+      }
+    });
+  });
+}
+
+function probeL7Socks5Raw(ip, port, timeoutMs = 2500) {
   return new Promise((resolve) => {
     const start = Date.now();
     const sock = new net.Socket();
@@ -222,8 +265,8 @@ function probeL7Socks5(ip, port, timeoutMs = 3000) {
     sock.once('timeout', () => finish(false));
     sock.once('error', () => finish(false));
     sock.once('close', () => finish(false));
+
     sock.connect(port, ip, () => {
-      // SOCKS5 阶段 1: 无认证协商
       sock.write(Buffer.from([0x05, 0x01, 0x00]));
     });
     let stage = 1;
@@ -231,7 +274,6 @@ function probeL7Socks5(ip, port, timeoutMs = 3000) {
     sock.on('data', (chunk) => {
       if (stage === 1) {
         if (chunk.length >= 2 && chunk[0] === 0x05 && chunk[1] === 0x00) {
-          // 阶段 2: CONNECT cp.cloudflare.com:80 (域名模式 0x03)
           stage = 2;
           const host = Buffer.from('cp.cloudflare.com', 'ascii');
           const req = Buffer.concat([
@@ -244,13 +286,11 @@ function probeL7Socks5(ip, port, timeoutMs = 3000) {
           finish(false);
         }
       } else if (stage === 2) {
-        // 前 4 字节为 VER/REP/RSV/ATYP，之后是变长 BND.ADDR+BND.PORT
         if (chunk.length >= 2 && chunk[0] === 0x05) {
           if (chunk[1] !== 0x00) {
-            finish(false); // REP != 0x00 连接失败
+            finish(false);
             return;
           }
-          // 阶段 3: 隧道已建立，在隧道内发真实 GET 验证数据回传
           stage = 3;
           buf = '';
           sock.write('GET /generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
@@ -267,56 +307,24 @@ function probeL7Socks5(ip, port, timeoutMs = 3000) {
   });
 }
 
-// probeL7Https: 真 HTTPS 代理验证（先对代理本身做 TLS 握手，再在 TLS 连接上发正向请求）。
-// 若 TLS 握手失败，说明上游列表把明文代理错标成了 https://，返回 { ok, plainFallback: true }。
-async function probeL7Https(ip, port, timeoutMs = 3000) {
-  const tls = require('tls');
-  return new Promise((resolve) => {
-    const start = Date.now();
-    let done = false;
-    let sock = null;
-    const finish = (ok, plainFallback) => {
-      if (done) return;
-      done = true;
-      try { if (sock) sock.destroy(); } catch (e) {}
-      resolve({ ok, ms: ok ? Date.now() - start : null, plainFallback });
-    };
-    sock = tls.connect({ host: ip, port, rejectUnauthorized: false, timeout: timeoutMs }, () => {
-      sock.write('GET http://cp.cloudflare.com/generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
-    });
-    let buf = '';
-    sock.on('timeout', () => finish(false, false));
-    sock.on('error', () => finish(false, true)); // TLS 失败 => 疑似明文代理错标
-    sock.on('data', (chunk) => {
-      buf += chunk.toString('utf8');
-      if (buf.includes('204 No Content') || buf.includes('HTTP/1.1 204') || buf.includes('HTTP/1.0 204')) {
-        finish(true, false);
-      } else if (buf.length > 2000) {
-        finish(false, false);
-      }
-    });
-  });
-}
-
-// probeL7 协议分发：成功返回 { okMs, scheme }；失败返回 null。
-// https 协议在 TLS 握手失败时自动回退明文并返回 scheme='http'，供上层归一化链接。
+// 统一入口：每个探针均受 withHardTimeout(3500ms) 强力看门狗保护，绝不挂起
 async function probeL7(proto, ip, port) {
   const p = (proto || '').toLowerCase();
   if (p === 'http') {
-    const ms = await probeL7Http(ip, port);
+    const ms = await withHardTimeout(probeL7HttpRaw(ip, port, 2500), 3000);
     return ms !== null ? { okMs: ms, scheme: 'http' } : null;
   }
   if (p === 'https') {
-    const r = await probeL7Https(ip, port);
-    if (r.ok) return { okMs: r.ms, scheme: 'https' };
-    if (r.plainFallback) {
-      const ms = await probeL7Http(ip, port);
+    const r = await withHardTimeout(probeL7HttpsRaw(ip, port, 2500), 3000);
+    if (r && r.ok) return { okMs: r.ms, scheme: 'https' };
+    if (r && r.plainFallback) {
+      const ms = await withHardTimeout(probeL7HttpRaw(ip, port, 2500), 3000);
       if (ms !== null) return { okMs: ms, scheme: 'http' };
     }
     return null;
   }
   if (p === 'socks5') {
-    const ms = await probeL7Socks5(ip, port);
+    const ms = await withHardTimeout(probeL7Socks5Raw(ip, port, 2500), 3000);
     return ms !== null ? { okMs: ms, scheme: 'socks5' } : null;
   }
   return null;
@@ -483,8 +491,6 @@ async function main() {
       const r = await probeL7(p, item.ip, item.port);
       if (r !== null) {
         item.l7_verified = true;
-        // https 错标修正：若验证回退到明文，链接 scheme 归一化为 http://，
-        // 否则消费方会对明文代理发 TLS 握手而全部失败。
         if (p === 'https' && r.scheme === 'http') {
           item.link = item.link.replace(/^https:\/\//, 'http://');
           item.proto = 'http';
@@ -497,7 +503,6 @@ async function main() {
         item.l7_verified = false;
       }
     } else {
-      // Xray 等协议（已通过纯静态 CDN 黑名单清洗，由本地网关做精细化认证）
       item.l7_verified = null;
     }
   }, 100);
