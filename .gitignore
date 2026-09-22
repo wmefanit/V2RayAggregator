@@ -16,3 +16,8 @@ summary.json
 dist/
 dist_*.tar.gz
 release_notes.md
+all_l7_verified*.txt
+all_l7_verified*.json
+xray_alive*.txt
+xray_alive*.json
+high_speed_meta.json
