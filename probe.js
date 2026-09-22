@@ -538,16 +538,18 @@ async function main() {
   console.log(`  阶段耗时拆解: DNS=${(dnsMs/1000).toFixed(1)}s  TCP=${(tcpMs/1000).toFixed(1)}s  CDN静态拦截=${cdnSkipped} 个`);
   alive.sort((a, b) => a.rtt_ms - b.rtt_ms);
 
-  // === [2.5/4] 对前 2000 个低延迟候选节点执行 L7 真实验活 (HTTP CONNECT / SOCKS5) ===
-  console.log('\n=== [2.5/4] 对 Top 候选节点执行 L7 隧道真实验活 (防止 1ms 假节点霸榜) ===');
-  const l7Candidates = alive.slice(0, 2000);
-  let l7VerifiedCount = 0;
+  // === [2.5/4] 对低延迟候选节点执行 L7 深度验活（按真实 L7 业务延迟量化“高速”）===
+  console.log('\n=== [2.5/4] 对候选节点执行 L7 隧道真实验活 (填充 500 高速可用池) ===');
+  // 扩大 L7 候选范围：前 6000 个低延迟存活节点，保证能验出足够填满高速度池的真实可用节点
+  const l7Candidates = alive.slice(0, 6000);
+  const l7Verified = [];
   await runPool(l7Candidates, async (item) => {
     const p = (item.proto || '').toLowerCase();
     if (p === 'http' || p === 'https' || p === 'socks5' || p === 'socks4') {
       const r = await probeL7(p, item.ip, item.port);
       if (r !== null) {
         item.l7_verified = true;
+        item.l7_rtt_ms = r.okMs; // 记录包含 DNS+TCP+L7 204 回传的完整业务耗时
         if (p === 'https' && r.scheme === 'http') {
           item.link = item.link.replace(/^https:\/\//, 'http://');
           item.proto = 'http';
@@ -555,15 +557,18 @@ async function main() {
         if (p === 'https' && r.scheme === 'https') {
           item.link = item.link.replace(/^https:\/\//, 'https://');
         }
-        l7VerifiedCount++;
+        l7Verified.push(item);
       } else {
         item.l7_verified = false;
       }
     } else {
       item.l7_verified = null;
     }
-  }, 100);
-  console.log(`  L7 验活完成: ${l7VerifiedCount} 个真实可用代理`);
+  }, 120);
+
+  // “高速”的真实量化：100% 优先按 L7 真实响应延迟（l7_rtt_ms）升序严格重排！
+  l7Verified.sort((a, b) => (a.l7_rtt_ms || 9999) - (b.l7_rtt_ms || 9999));
+  console.log(`  L7 验活完成: ${l7Verified.length} 个真实可用代理 (已按真实 L7 延迟重排)`);
 
   console.log('\n=== [3/4] 导出多场景结构化分流订阅 ===');
   fs.rmSync(OUT_DIR, { recursive: true, force: true });
@@ -583,16 +588,24 @@ async function main() {
   fs.writeFileSync('all_exit_meta.txt', alive.map(n =>
     `[${n.country || 'XX'}|${n.asn || '-'}|${n.rtt_ms}ms] ${n.link}`).join('\n'));
 
-  // 2. 真实可用优质池 (优先 L7 已验活的 HTTP/SOCKS5 与经过 ASN 清洗的 Xray 优质节点)
-  const l7Verified = alive.filter(n => n.l7_verified === true);
+  // 2. 真实优质高速池 (100% 优先填满 L7 验活节点，真实 L7 延迟在前，降序严格保序)
   // 白名单收紧：仅允许 Xray 系协议（vless/vmess/trojan/ss）以未验活身份入列 high_speed，
   // socks4 等必须通过 L7 验活（防止未验活死节点混入）
   const XRAY_PROTOS = new Set(['vless', 'vmess', 'trojan', 'ss']);
   const xrayCandidates = alive.filter(n => n.l7_verified === null && XRAY_PROTOS.has((n.proto || '').toLowerCase()));
-  // high_speed: 优先填充 100% L7 验活的极速节点，不足部分由 Xray 节点补齐
   const topFast = [...l7Verified, ...xrayCandidates].slice(0, 500);
   
   fs.writeFileSync('high_speed.txt', topFast.map(n => n.link).join('\n'));
+  fs.writeFileSync('high_speed_meta.json', JSON.stringify(topFast.map(n => ({
+    link: n.link,
+    proto: n.proto,
+    ip: n.ip,
+    port: n.port,
+    country: n.country,
+    tcp_rtt_ms: n.rtt_ms,
+    l7_rtt_ms: n.l7_rtt_ms || null,
+    l7_verified: n.l7_verified === true,
+  })), null, 2));
   fs.writeFileSync('Eternity.txt', topFast.map(n => n.link).join('\n'));
   fs.writeFileSync('Eternity', Buffer.from(topFast.map(n => n.link).join('\n')).toString('base64'));
 

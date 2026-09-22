@@ -93,6 +93,7 @@ jobs:
             all_exit_meta.txt \
             all_exit_base64.txt \
             high_speed.txt \
+            high_speed_meta.json \
             Eternity.txt \
             summary.json \
             dist_country.tar.gz \
