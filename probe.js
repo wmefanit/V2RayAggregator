@@ -182,10 +182,15 @@ function withHardTimeout(promise, timeoutMs) {
   ]);
 }
 
-// 统一 L7 判据：CONNECT 隧道 + 隧道内 TLS 握手成功。
-// 该判据无法被 CDN 边缘 IP / 仅支持绝对URI的伪代理伪造（它们不接受 CONNECT，或无法完成真实 TLS 握手）。
+// 统一 L7 判据：CONNECT 隧道 + 隧道内 TLS 握手 + 证书链严格校验。
+// 该判据无法被 CDN 边缘 IP / 仅支持绝对URI的伪代理伪造，也能刷掉 TLS 中间人劫持蜜罐：
+//   1) 伪代理不接受 CONNECT 或无法建隧道 → 失败；
+//   2) TLS 中间人劫持节点（自签/过期证书替身）→ 严格校验证书链必失败；
+//   3) 只有透传真实 HTTPS 流量的真代理 → 目标站点真实证书验证通过。
 const L7_TUNNEL_HOST = 'detectportal.firefox.com';
 const L7_TUNNEL_PORT = 443;
+// 本地单测专用：注入自建 CA，让 mock TLS 服务器能被严格校验通过（生产环境不设置）
+const L7_TEST_CA = process.env.L7_TEST_CA ? fs.readFileSync(process.env.L7_TEST_CA) : undefined;
 
 function connectRequest() {
   return `CONNECT ${L7_TUNNEL_HOST}:${L7_TUNNEL_PORT} HTTP/1.1\r\n` +
@@ -212,7 +217,8 @@ function tlsVerifyOverSocket(sock, leftover, timeoutMs) {
       const tlsSock = tls.connect({
         socket: sock,
         servername: L7_TUNNEL_HOST,
-        rejectUnauthorized: false,
+        rejectUnauthorized: true, // 严格校验：刷掉 TLS 中间人劫持/自签/过期证书节点
+        ca: L7_TEST_CA,
         timeout: Math.max(500, timeoutMs - 200),
       }, () => fin(true));
       tlsSock.once('error', () => fin(false));
