@@ -61,7 +61,7 @@ jobs:
           L7_CONCURRENCY: "800"
           DNS_CONCURRENCY: "300"
           TCP_TIMEOUT_MS: "2000"
-          L7_TIMEOUT_MS: "2500"
+          L7_TIMEOUT_MS: "4000"
           CHUNK_SIZE: "20000"
         run: |
           node probe.js "$SOURCES_FILE"
