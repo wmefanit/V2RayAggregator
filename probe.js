@@ -272,70 +272,71 @@ function probeL7Socks5Raw(ip, port, timeoutMs = 2500) {
       sock.write(Buffer.from([0x05, 0x01, 0x00]));
     });
 
+    const sendConnect = () => {
+      const host = Buffer.from('cp.cloudflare.com', 'ascii');
+      const req = Buffer.concat([
+        Buffer.from([0x05, 0x01, 0x00, 0x03, host.length]),
+        host,
+        Buffer.from([0x00, 0x50]),
+      ]);
+      sock.write(req);
+    };
+    const sendHttp = () => {
+      sock.write('GET /generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
+    };
+
+    const handleStage2 = (data) => {
+      stageBuf = Buffer.concat([stageBuf, data]);
+      if (stageBuf.length < 4) return;
+      if (stageBuf[0] !== 0x05) return finish(false);
+      if (stageBuf[1] !== 0x00) return finish(false);
+
+      const atyp = stageBuf[3];
+      let replyLen = -1;
+      if (atyp === 0x01) {
+        replyLen = 10; // 4 头 + IPv4 4 + 端口 2
+      } else if (atyp === 0x04) {
+        replyLen = 22; // 4 头 + IPv6 16 + 端口 2
+      } else if (atyp === 0x03) {
+        if (stageBuf.length < 5) return;
+        replyLen = 4 + 1 + stageBuf[4] + 2; // 4 头 + 1 长度 + 域名 + 端口 2
+      } else {
+        return finish(false);
+      }
+
+      if (stageBuf.length < replyLen) return;
+
+      const leftover = stageBuf.slice(replyLen);
+      stageBuf = Buffer.alloc(0);
+      stage = 3;
+      sendHttp();
+      if (leftover.length > 0) handleStage3(leftover);
+    };
+
+    const handleStage3 = (data) => {
+      httpBuf += data.toString('utf8');
+      if (httpBuf.includes('204 No Content') || httpBuf.includes('HTTP/1.1 204') || httpBuf.includes('HTTP/1.0 204')) {
+        finish(true);
+      } else if (httpBuf.length > 2000 || httpBuf.includes('400 Bad Request') || httpBuf.includes('403 Forbidden') || httpBuf.includes('502 Bad Gateway')) {
+        finish(false);
+      }
+    };
+
     sock.on('data', (chunk) => {
       if (stage === 1) {
         stageBuf = Buffer.concat([stageBuf, chunk]);
         if (stageBuf.length < 2) return;
-        if (stageBuf[0] === 0x05 && stageBuf[1] === 0x00) {
-          stage = 2;
-          stageBuf = stageBuf.slice(2);
-          const host = Buffer.from('cp.cloudflare.com', 'ascii');
-          const req = Buffer.concat([
-            Buffer.from([0x05, 0x01, 0x00, 0x03, host.length]),
-            host,
-            Buffer.from([0x00, 0x50]),
-          ]);
-          sock.write(req);
-        } else {
-          return finish(false);
-        }
-      }
-
-      if (stage === 2) {
-        if (chunk.length > 0 && stageBuf.length === 0) {
-          stageBuf = Buffer.concat([stageBuf, chunk]);
-        }
-        if (stageBuf.length < 4) return;
-        if (stageBuf[0] !== 0x05 || stageBuf[1] !== 0x00) {
-          return finish(false);
-        }
-
-        const atyp = stageBuf[3];
-        let replyLen = 0;
-        if (atyp === 0x01) {
-          replyLen = 4 + 4 + 2; // IPv4: 10B
-        } else if (atyp === 0x03) {
-          if (stageBuf.length < 5) return;
-          replyLen = 4 + 1 + stageBuf[4] + 2; // Domain
-        } else if (atyp === 0x04) {
-          replyLen = 4 + 16 + 2; // IPv6: 22B
-        } else {
-          return finish(false);
-        }
-
-        if (stageBuf.length < replyLen) return;
-
-        const extraData = stageBuf.slice(replyLen);
-        stage = 3;
+        if (stageBuf[0] !== 0x05 || stageBuf[1] !== 0x00) return finish(false);
+        // 问候之后可能粘带 CONNECT 应答，剩余字节交给 stage 2 解析，绝不重复消费
+        const leftover = stageBuf.slice(2);
         stageBuf = Buffer.alloc(0);
-        sock.write('GET /generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
-        if (extraData.length > 0) {
-          httpBuf += extraData.toString('utf8');
-          if (httpBuf.includes('204 No Content') || httpBuf.includes('HTTP/1.1 204') || httpBuf.includes('HTTP/1.0 204')) {
-            return finish(true);
-          }
-        }
+        stage = 2;
+        sendConnect();
+        if (leftover.length > 0) handleStage2(leftover);
         return;
       }
-
-      if (stage === 3) {
-        httpBuf += chunk.toString('utf8');
-        if (httpBuf.includes('204 No Content') || httpBuf.includes('HTTP/1.1 204') || httpBuf.includes('HTTP/1.0 204')) {
-          finish(true);
-        } else if (httpBuf.length > 2000 || httpBuf.includes('400 Bad Request') || httpBuf.includes('403 Forbidden') || httpBuf.includes('502 Bad Gateway')) {
-          finish(false);
-        }
-      }
+      if (stage === 2) return handleStage2(chunk);
+      handleStage3(chunk);
     });
   });
 }
@@ -710,4 +711,15 @@ async function main() {
   console.log(`- summary.json: 统计摘要报告 (守恒校验: ${summary.conservation_check})`);
 }
 
-main().catch((e) => { console.error(e); process.exit(1); });
+// 仅作为入口脚本执行时才跑主流程；被测试 harness require 时不启动网络任务
+if (require.main === module) {
+  main().catch((e) => { console.error(e); process.exit(1); });
+}
+
+// 供测试脚本复用（node --test / 独立 harness）
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    probeL7HttpRaw, probeL7HttpsRaw, probeL7Socks5Raw, probeL7Socks4Raw, probeL7,
+    extractAllCandidates, parseHostPort, runPool,
+  };
+}
