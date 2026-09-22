@@ -133,8 +133,8 @@ jobs:
           ### 🔍 验证等级说明（避免口径混淆）
           - \`all_exit.txt\`：TCP 可达。**不等于可用**，仅表示端口能建立 TCP 连接。
           - \`all_l7_verified.txt\`：通过 HTTP CONNECT / SOCKS4 / SOCKS5 隧道向 cp.cloudflare.com 取得 204。**协议层可用**。
-          - \`xray_alive.txt\`：VLESS/VMess/Trojan/SS 的 TCP 可达节点。云端无协议执行核心，**未做协议验证**，需本地精验。
-          - \`high_speed.txt\`：从 \`all_l7_verified\` 中按 204 实测响应延迟升序取前 500。**注意：这是延迟排序，不是带宽测速**。
+          - \`xray_alive.txt\`：VLESS/VMess/Trojan/SS 的 TCP 可达但**云端未验活**节点（供本地精验）。\n  - \`all_xray_verified.txt\`：云端 xrayprobe 真实 L7 验活通过的 Xray 节点（CONNECT 隧道 + TLS + 内容断言）。
+          - \`high_speed.txt\`：多协议配额均衡精选池（HTTP/SOCKS4/SOCKS5/VLESS/VMess/Trojan/SS 按配额融合，全部经过真实 L7 验活，按实测业务延迟升序）。**注意：这是延迟排序，不是带宽测速**。
           - 本流水线**不做下载带宽测速**（百万池带宽测试流量与耗时不可控），带宽由本地按需复验。
 
           ### 📥 Direct Subscription & Download Links:
