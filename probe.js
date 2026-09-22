@@ -11,9 +11,11 @@ const zlib = require('zlib');
 
 const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/all_sources.json';
 const OUT_DIR = './dist';
-const TCP_CONCURRENCY = parseInt(process.env.TCP_CONCURRENCY || '600', 10);
-const DNS_CONCURRENCY = parseInt(process.env.DNS_CONCURRENCY || '200', 10);
-const TCP_TIMEOUT_MS = parseInt(process.env.TCP_TIMEOUT_MS || '3500', 10);
+const TCP_CONCURRENCY = parseInt(process.env.TCP_CONCURRENCY || '1200', 10);
+const DNS_CONCURRENCY = parseInt(process.env.DNS_CONCURRENCY || '300', 10);
+// 实测候选池：存活节点 TCP 握手平均 342ms，2s 超时有 5 倍余量，不会误杀跨洋节点；
+// 而 48.8% 是丢包型死节点会吃满超时，超时值直接决定总耗时（3.5s 会让整轮跑 2 小时）。
+const TCP_TIMEOUT_MS = parseInt(process.env.TCP_TIMEOUT_MS || '2000', 10);
 const DNS_TIMEOUT_MS = parseInt(process.env.DNS_TIMEOUT_MS || '4000', 10);
 const MAX_CANDIDATES = parseInt(process.env.MAX_CANDIDATES || '0', 10);
 const CHUNK_SIZE = parseInt(process.env.CHUNK_SIZE || '20000', 10);
@@ -269,12 +271,10 @@ function tcpProbeOnce(ip, port, timeoutMs) {
   });
 }
 
-// 带 1 次重试的 TCP 探针 (防止跨洋瞬时抖动被误杀)
+// 单次 TCP 握手探测。不做盲重试：实测 48.8% 候选是丢包型死节点，
+// 盲重试只会让每个死节点多耗一次完整超时（这是上一轮跑满 2 小时的主因）。
 async function tcpProbe(ip, port) {
-  const rtt = await tcpProbeOnce(ip, port, TCP_TIMEOUT_MS);
-  if (rtt !== null) return rtt;
-  // 初次超时或失败，重试一次 (给 2500ms)
-  return await tcpProbeOnce(ip, port, 2500);
+  return await tcpProbeOnce(ip, port, TCP_TIMEOUT_MS);
 }
 
 async function runPool(items, worker, concurrency) {
@@ -339,7 +339,8 @@ async function main() {
 
   console.log(`\n=== [2/4] 启动 ${TCP_CONCURRENCY} 高并发分块拨测 (块大小: ${CHUNK_SIZE}, 超时: ${TCP_TIMEOUT_MS}ms) ===`);
   const alive = [];
-  let parsedTotal = 0, probeTotal = 0;
+  let parsedTotal = 0, probeTotal = 0, dnsMs = 0, tcpMs = 0, cdnSkipped = 0;
+  let tcpT0 = 0;
   for (let off = 0; off < rawList.length; off += CHUNK_SIZE) {
     const chunk = rawList.slice(off, off + CHUNK_SIZE);
     const parsed = [];
@@ -349,20 +350,24 @@ async function main() {
     }
     parsedTotal += parsed.length;
 
+    const dnsT0 = Date.now();
     const domains = Array.from(new Set(parsed.filter(x => !net.isIP(x.ep.host)).map(x => x.ep.host)));
     const dnsCache = new Map();
     if (domains.length > 0) {
       await runPool(domains, async (d) => { dnsCache.set(d, await resolveA(d)); }, DNS_CONCURRENCY);
     }
+    dnsMs += Date.now() - dnsT0;
 
     const tasks = parsed.map(x => ({ ...x, ip: net.isIP(x.ep.host) ? x.ep.host : dnsCache.get(x.ep.host) })).filter(x => x.ip);
     probeTotal += tasks.length;
+    tcpT0 = Date.now();
 
     const probed = await runPool(tasks, async (item) => {
       const geo = lookupAsn(item.ip);
       const org = geo ? geo.org : '';
       // 阶段 0 纯静态拦截：裸 IP + 纯 CDN ASN 的假节点直接拦截，不消耗 TCP 探测资源
       if (isCdnPseudoNode(item.ep.host, org)) {
+        cdnSkipped++;
         return null;
       }
 
@@ -386,6 +391,7 @@ async function main() {
     }, TCP_CONCURRENCY);
 
     for (const p of probed) if (p) alive.push(p);
+    tcpMs += Date.now() - tcpT0;
     const progress = Math.min(off + CHUNK_SIZE, rawList.length);
     const elapsed = Math.round((Date.now() - t0) / 1000);
     const speed = Math.round(probeTotal / Math.max(1, elapsed));
@@ -393,6 +399,7 @@ async function main() {
   }
 
   console.log(`\n探活完成: 存活可用数 ${alive.length} / ${probeTotal} (耗时: ${Math.round((Date.now() - t0) / 1000)}s)`);
+  console.log(`  阶段耗时拆解: DNS=${(dnsMs/1000).toFixed(1)}s  TCP=${(tcpMs/1000).toFixed(1)}s  CDN静态拦截=${cdnSkipped} 个`);
   alive.sort((a, b) => a.rtt_ms - b.rtt_ms);
 
   // === [2.5/4] 对前 2000 个低延迟候选节点执行 L7 真实验活 (HTTP CONNECT / SOCKS5) ===
