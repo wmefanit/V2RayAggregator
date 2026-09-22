@@ -307,6 +307,59 @@ function probeL7Socks5Raw(ip, port, timeoutMs = 2500) {
   });
 }
 
+// SOCKS4a（变种：域名字段用 0.0.0.x 占位 + 末尾域名串），兼容不支持 SOCKS5 的老代理
+function probeL7Socks4Raw(ip, port, timeoutMs = 2500) {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const sock = new net.Socket();
+    let done = false;
+    const finish = (ok) => {
+      if (done) return;
+      done = true;
+      try { sock.destroy(); } catch (e) {}
+      resolve(ok ? Date.now() - start : null);
+    };
+    sock.setTimeout(timeoutMs);
+    sock.once('timeout', () => finish(false));
+    sock.once('error', () => finish(false));
+    sock.once('close', () => finish(false));
+
+    sock.connect(port, ip, () => {
+      // SOCKS4a: [4, 1, 端口, 0.0.0.1, 用户ID+0x00, 域名+0x00]
+      const host = Buffer.from('cp.cloudflare.com', 'ascii');
+      const req = Buffer.concat([
+        Buffer.from([0x04, 0x01, 0x00, 0x50, 0x00, 0x00, 0x00, 0x01, 0x00]),
+        host,
+        Buffer.from([0x00]),
+      ]);
+      sock.write(req);
+    });
+    let stage = 1;
+    let buf = '';
+    sock.on('data', (chunk) => {
+      if (stage === 1) {
+        if (chunk.length >= 1) {
+          if (chunk[0] !== 0x00) { finish(false); return; } // VN 必须为 0
+          if (chunk.length >= 2 && chunk[1] === 0x5a) {
+            stage = 2;
+            buf = '';
+            sock.write('GET /generate_204 HTTP/1.1\r\nHost: cp.cloudflare.com\r\nUser-Agent: curl/8.5.0\r\nConnection: close\r\n\r\n');
+          } else {
+            finish(false); // CD=90 (granted) 之外一律死
+          }
+        }
+      } else if (stage === 2) {
+        buf += chunk.toString('utf8');
+        if (buf.includes('204 No Content') || buf.includes('HTTP/1.1 204') || buf.includes('HTTP/1.0 204')) {
+          finish(true);
+        } else if (buf.length > 2000 || buf.includes('400 Bad Request') || buf.includes('403 Forbidden') || buf.includes('502 Bad Gateway')) {
+          finish(false);
+        }
+      }
+    });
+  });
+}
+
 // 统一入口：每个探针均受 withHardTimeout(3500ms) 强力看门狗保护，绝不挂起
 async function probeL7(proto, ip, port) {
   const p = (proto || '').toLowerCase();
@@ -326,6 +379,10 @@ async function probeL7(proto, ip, port) {
   if (p === 'socks5') {
     const ms = await withHardTimeout(probeL7Socks5Raw(ip, port, 2500), 3000);
     return ms !== null ? { okMs: ms, scheme: 'socks5' } : null;
+  }
+  if (p === 'socks4') {
+    const ms = await withHardTimeout(probeL7Socks4Raw(ip, port, 2500), 3000);
+    return ms !== null ? { okMs: ms, scheme: 'socks4' } : null;
   }
   return null;
 }
@@ -487,7 +544,7 @@ async function main() {
   let l7VerifiedCount = 0;
   await runPool(l7Candidates, async (item) => {
     const p = (item.proto || '').toLowerCase();
-    if (p === 'http' || p === 'https' || p === 'socks5') {
+    if (p === 'http' || p === 'https' || p === 'socks5' || p === 'socks4') {
       const r = await probeL7(p, item.ip, item.port);
       if (r !== null) {
         item.l7_verified = true;
@@ -528,7 +585,10 @@ async function main() {
 
   // 2. 真实可用优质池 (优先 L7 已验活的 HTTP/SOCKS5 与经过 ASN 清洗的 Xray 优质节点)
   const l7Verified = alive.filter(n => n.l7_verified === true);
-  const xrayCandidates = alive.filter(n => n.l7_verified === null); // Xray 等由本地网关做精准鉴权
+  // 白名单收紧：仅允许 Xray 系协议（vless/vmess/trojan/ss）以未验活身份入列 high_speed，
+  // socks4 等必须通过 L7 验活（防止未验活死节点混入）
+  const XRAY_PROTOS = new Set(['vless', 'vmess', 'trojan', 'ss']);
+  const xrayCandidates = alive.filter(n => n.l7_verified === null && XRAY_PROTOS.has((n.proto || '').toLowerCase()));
   // high_speed: 优先填充 100% L7 验活的极速节点，不足部分由 Xray 节点补齐
   const topFast = [...l7Verified, ...xrayCandidates].slice(0, 500);
   
