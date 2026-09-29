@@ -149,7 +149,7 @@ jobs:
           - **Country Bundles**: [\`dist_country.tar.gz\`](https://github.com/${REPO}/releases/download/${RELEASE_TAG}/dist_country.tar.gz)
           EOF
 
-          ASSETS="all_exit.txt all_exit_meta.txt all_exit_base64.txt \
+          ASSETS="summary.json all_exit.txt all_exit_meta.txt all_exit_base64.txt \
             all_l7_verified.txt all_l7_verified_meta.json \
             xray_alive.txt xray_alive_meta.json \
             all_xray_verified.txt all_xray_verified_base64.txt all_xray_verified_b64.txt all_xray_verified_meta.json \
@@ -158,20 +158,30 @@ jobs:
             high_speed_socks5.txt high_speed_socks4.txt high_speed_http.txt \
             high_speed_vless.txt high_speed_vless_base64.txt high_speed_vmess.txt high_speed_vmess_base64.txt \
             high_speed_trojan.txt high_speed_trojan_base64.txt high_speed_ss.txt high_speed_ss_base64.txt \
-            Eternity.txt summary.json \
+            Eternity.txt \
             dist_country.tar.gz dist_protocol.tar.gz"
 
+          push_assets() {
+            local attempt ok=0
+            for attempt in 1 2 3; do
+              if gh release upload "$RELEASE_TAG" $ASSETS --clobber; then ok=1; break; fi
+              echo "asset upload failed (attempt $attempt/3), retrying in 5s"
+              sleep 5
+            done
+            if [ "$ok" != "1" ]; then echo "release asset upload failed after 3 attempts"; exit 1; fi
+          }
+
           if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
-            gh release upload "$RELEASE_TAG" $ASSETS --clobber
+            push_assets
           else
             if [ "$PRERELEASE" = "true" ]; then
               gh release create "$RELEASE_TAG" --target master --prerelease \
                 --title "Smoke Test Pool (${NOW})" --notes-file release_notes.md
             else
               gh release create "$RELEASE_TAG" --target master \
-                --title "Latest Multi-Exit Proxy Pool" --notes-file release_notes.md
+                --title "Latest Multi-Exit Proxy Pool (${NOW})" --notes-file release_notes.md
             fi
-            gh release upload "$RELEASE_TAG" $ASSETS --clobber
+            push_assets
           fi
 
           gh release edit "$RELEASE_TAG" \
