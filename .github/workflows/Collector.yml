@@ -163,10 +163,15 @@ jobs:
 
           push_assets() {
             local attempt ok=0
-            # 跳过缺失或空文件：Xray 关闭等场景下会产生 0 字节资产，GitHub 上传会 400 Bad Content-Length
+            # 跳过缺失/空文件（Xray 关闭等场景会产出 0 字节资产，上传会 400），
+            # 并删除 Release 上同名的陈旧资产，避免误报上一批结果。
             local upload_list=""
             for f in $ASSETS; do
-              if [ -s "$f" ]; then upload_list="$upload_list $f"; fi
+              if [ -s "$f" ]; then upload_list="$upload_list $f"; else
+                if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+                  gh release delete-asset "$RELEASE_TAG" "$f" -y >/dev/null 2>&1 || true
+                fi
+              fi
             done
             if [ -z "$upload_list" ]; then echo "no non-empty assets to upload"; exit 1; fi
             for attempt in 1 2 3; do
