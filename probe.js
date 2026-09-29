@@ -9,6 +9,7 @@ const tls = require('tls');
 const dns = require('dns').promises;
 const url = require('url');
 const zlib = require('zlib');
+const { buildSourceStats } = require('./source_stats');
 const { spawn } = require('child_process');
 
 const CONFIG_FILE = process.argv[2] || process.env.SOURCES_FILE || './sub/all_sources.json';
@@ -898,34 +899,9 @@ async function main() {
     fs.writeFileSync(path.join(OUT_DIR, 'by_protocol', `${p.toLowerCase()}.txt`), links.join('\n'));
   }
 
-  // 6. 统计源级产出漏斗
-  const sourceStats = {};
-  for (const t of taskUrls) {
-    if (!sourceStats[t.name]) sourceStats[t.name] = { fetched: 0, deduped: 0, tcp_alive: 0, l7_verified: 0, xray_verified: 0 };
-  }
-  for (let i = 0; i < taskUrls.length; i++) {
-    sourceStats[taskUrls[i].name].fetched += (perSource[i] || []).length;
-  }
-  for (const item of rawList) {
-    const sset = (item.sources && item.sources.length) ? item.sources : [item.source || 'unknown'];
-    const excl = sset.length === 1;
-    for (const s of sset) {
-      if (sourceStats[s]) {
-        sourceStats[s].deduped++;
-        sourceStats[s].sampled = (sourceStats[s].sampled || 0) + 1;
-        if (excl) sourceStats[s].exclusive = (sourceStats[s].exclusive || 0) + 1;
-      }
-    }
-  }
-  for (const n of alive) {
-    if (sourceStats[n.source]) sourceStats[n.source].tcp_alive++;
-  }
-  for (const n of l7Verified) {
-    if (sourceStats[n.source]) sourceStats[n.source].l7_verified++;
-  }
-  for (const n of xrayVerified) {
-    if (sourceStats[n.source]) sourceStats[n.source].xray_verified++;
-  }
+  // 6. 统计源级产出漏斗（共享节点按全部 sources 归因，不再只计首源）
+  const enabledNames = (catalog.sources || []).filter(s => s.enabled !== false).map(s => s.name);
+  const sourceStats = buildSourceStats(enabledNames, taskUrls, perSource, rawList, alive, l7Verified, xrayVerified);
 
   // 6. 总体报告
   const summary = {

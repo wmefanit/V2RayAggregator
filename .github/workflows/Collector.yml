@@ -163,8 +163,14 @@ jobs:
 
           push_assets() {
             local attempt ok=0
+            # 跳过缺失或空文件：Xray 关闭等场景下会产生 0 字节资产，GitHub 上传会 400 Bad Content-Length
+            local upload_list=""
+            for f in $ASSETS; do
+              if [ -s "$f" ]; then upload_list="$upload_list $f"; fi
+            done
+            if [ -z "$upload_list" ]; then echo "no non-empty assets to upload"; exit 1; fi
             for attempt in 1 2 3; do
-              if gh release upload "$RELEASE_TAG" $ASSETS --clobber; then ok=1; break; fi
+              if gh release upload "$RELEASE_TAG" $upload_list --clobber; then ok=1; break; fi
               echo "asset upload failed (attempt $attempt/3), retrying in 5s"
               sleep 5
             done

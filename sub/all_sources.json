@@ -915,18 +915,6 @@
         }
       ],
       "enabled": false
-    },
-    {
-      "name": "rtwo2-vless",
-      "parser": "subscription",
-      "pools": [
-        "all"
-      ],
-      "urls": [
-        {
-          "url": "https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/top.txt"
-        }
-      ]
     }
   ]
 }
