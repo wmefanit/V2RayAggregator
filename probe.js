@@ -107,16 +107,16 @@ function maybeBase64Decode(text) {
 
 const IP_PORT_REGEX = /^(\d{1,3}(?:\.\d{1,3}){3}):(\d{1,5})$/;
 
-function extractAllCandidates(text, defaultType = 'http') {
+function extractAllCandidates(text, defaultType = 'http', sourceName = 'unknown') {
   const list = [];
   for (const raw of maybeBase64Decode(text).replace(/\r/g, '').split('\n')) {
     const line = raw.trim();
     if (!line || line.startsWith('#') || line.startsWith('//')) continue;
-    if (/^(vmess|vless|trojan|ss|ssr|socks5|socks4|http|https):\/\//i.test(line)) { list.push(line); continue; }
+    if (/^(vmess|vless|trojan|ss|ssr|socks5|socks4|http|https):\/\//i.test(line)) { list.push({ link: line, source: sourceName }); continue; }
     const m = line.match(IP_PORT_REGEX);
     if (m) {
       const port = parseInt(m[2], 10);
-      if (port > 0 && port < 65536) list.push(`${defaultType}://${m[1]}:${port}`);
+      if (port > 0 && port < 65536) list.push({ link: `${defaultType}://${m[1]}:${port}`, source: sourceName });
     }
   }
   return list;
@@ -509,7 +509,7 @@ async function runPool(items, worker, concurrency) {
 
 function roundRobinSample(perSourceLists, cap) {
   const cursors = perSourceLists.map(() => 0);
-  const seen = new Set();
+  const seen = new Map(); // link -> { link, sources: Set, firstSource: string }
   const out = [];
   let progressed = true;
   while (progressed) {
@@ -517,9 +517,19 @@ function roundRobinSample(perSourceLists, cap) {
     for (let i = 0; i < perSourceLists.length; i++) {
       const arr = perSourceLists[i];
       while (cursors[i] < arr.length) {
-        const v = arr[cursors[i]++];
+        const item = arr[cursors[i]++];
         progressed = true;
-        if (!seen.has(v)) { seen.add(v); out.push(v); break; }
+        const link = item.link;
+        const src = item.source || 'unknown';
+        if (!seen.has(link)) {
+          const entry = { link, source: src, sources: [src] };
+          seen.set(link, entry);
+          out.push(entry);
+          break;
+        } else {
+          const exist = seen.get(link);
+          if (!exist.sources.includes(src)) exist.sources.push(src);
+        }
       }
       if (cap > 0 && out.length >= cap) return out;
     }
@@ -624,7 +634,7 @@ async function main() {
   console.log(`待抓取 URL 数: ${taskUrls.length}`);
 
   const perSource = await runPool(taskUrls, async (t) => {
-    const cands = extractAllCandidates(await fetchText(t.url), t.type);
+    const cands = extractAllCandidates(await fetchText(t.url), t.type, t.name);
     console.log(`  - [${t.name}] (${t.type}) -> ${cands.length} 条`);
     return cands;
   }, 10);
@@ -642,9 +652,10 @@ async function main() {
   for (let off = 0; off < rawList.length; off += CHUNK_SIZE) {
     const chunk = rawList.slice(off, off + CHUNK_SIZE);
     const parsed = [];
-    for (const link of chunk) {
+    for (const item of chunk) {
+      const link = item.link;
       const ep = parseHostPort(link);
-      if (ep && ep.port > 0 && ep.port < 65536) parsed.push({ link, ep });
+      if (ep && ep.port > 0 && ep.port < 65536) parsed.push({ link, ep, source: item.source, sources: item.sources });
       else parseFailed++;
     }
     parsedTotal += parsed.length;
@@ -685,6 +696,8 @@ async function main() {
           country_source: geo && geo.country ? 'asn_db' : 'remark',
           rtt_ms: rtt,
           cdn_edge: isCdnOrg(org),
+          source: item.source || 'unknown',
+          sources: item.sources || [item.source || 'unknown'],
         };
       }
       return null;
@@ -885,8 +898,30 @@ async function main() {
     fs.writeFileSync(path.join(OUT_DIR, 'by_protocol', `${p.toLowerCase()}.txt`), links.join('\n'));
   }
 
+  // 6. 统计源级产出漏斗
+  const sourceStats = {};
+  for (const t of taskUrls) {
+    if (!sourceStats[t.name]) sourceStats[t.name] = { fetched: 0, deduped: 0, tcp_alive: 0, l7_verified: 0, xray_verified: 0 };
+  }
+  for (let i = 0; i < taskUrls.length; i++) {
+    sourceStats[taskUrls[i].name].fetched += (perSource[i] || []).length;
+  }
+  for (const item of rawList) {
+    if (sourceStats[item.source]) sourceStats[item.source].deduped++;
+  }
+  for (const n of alive) {
+    if (sourceStats[n.source]) sourceStats[n.source].tcp_alive++;
+  }
+  for (const n of l7Verified) {
+    if (sourceStats[n.source]) sourceStats[n.source].l7_verified++;
+  }
+  for (const n of xrayVerified) {
+    if (sourceStats[n.source]) sourceStats[n.source].xray_verified++;
+  }
+
   // 6. 总体报告
   const summary = {
+    source_stats: sourceStats,
     updated_at: new Date().toISOString(),
     total_fetched_raw: totalFetched,
     deduped_candidates: rawList.length,
