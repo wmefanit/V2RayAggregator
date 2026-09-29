@@ -803,7 +803,7 @@ async function main() {
   fs.writeFileSync('all_exit.txt', alive.map(n => n.link).join('\n'));
   fs.writeFileSync('all_exit_base64.txt', Buffer.from(alive.map(n => n.link).join('\n')).toString('base64'));
   fs.writeFileSync('all_exit_meta.txt', alive.map(n =>
-    `[${n.country || 'XX'}|${n.asn || '-'}|${n.rtt_ms}ms|${n.verification || 'tcp_only'}] ${n.link}`).join('\n'));
+    `[${n.country || 'XX'}|${n.asn || '-'}|${n.rtt_ms}ms|${n.verification || 'tcp_only'}|${n.source || 'unknown'}] ${n.link}`).join('\n'));
 
   // 2. 全量 L7 验活池 (HTTP/SOCKS 协议 100% 确认通断)
   const l7CleanText = l7Verified.map((n) => sanitizeProxyLink(n.link)).filter(Boolean).join('\n');
@@ -811,7 +811,7 @@ async function main() {
   fs.writeFileSync('all_l7_verified_base64.txt', Buffer.from(l7CleanText).toString('base64'));
   fs.writeFileSync('all_l7_verified_meta.json', JSON.stringify(l7Verified.map(n => ({
     link: sanitizeProxyLink(n.link), proto: n.proto, ip: n.ip, port: n.port, country: n.country,
-    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_verified'
+    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_verified', source: n.source || 'unknown', sources: n.sources || [n.source || 'unknown']
   })), null, 2));
 
   // 3. Xray 待验池（TCP 可达但云端未验活的 Xray 节点，供本地精验；已验活的另在 all_xray_verified）
@@ -820,7 +820,7 @@ async function main() {
   fs.writeFileSync('xray_alive.txt', xrayAlive.map(n => n.link).join('\n'));
   fs.writeFileSync('xray_alive_meta.json', JSON.stringify(xrayAlive.map(n => ({
     link: n.link, proto: n.proto, ip: n.ip, port: n.port, country: n.country,
-    tcp_rtt_ms: n.rtt_ms, verification: 'tcp_only'
+    tcp_rtt_ms: n.rtt_ms, verification: 'tcp_only', source: n.source || 'unknown', sources: n.sources || [n.source || 'unknown']
   })), null, 2));
 
   // 4. 多协议均衡的高速精选池（含可选 Xray 真验活节点，彻底消除单协议霸榜）
@@ -857,7 +857,7 @@ async function main() {
   fs.writeFileSync('high_speed_b64.txt', Buffer.from(highSpeedCleanText).toString('base64'));
   fs.writeFileSync('high_speed_meta.json', JSON.stringify(balancedTop.map(n => ({
     link: sanitizeProxyLink(n.link), proto: n.proto, ip: n.ip, port: n.port, country: n.country,
-    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: n.verification || 'l7_verified'
+    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: n.verification || 'l7_verified', source: n.source || 'unknown', sources: n.sources || [n.source || 'unknown']
   })), null, 2));
   fs.writeFileSync('Eternity.txt', highSpeedCleanText);
   fs.writeFileSync('Eternity', Buffer.from(highSpeedCleanText).toString('base64'));
@@ -875,7 +875,7 @@ async function main() {
   fs.writeFileSync('all_xray_verified_b64.txt', Buffer.from(xrayCleanText).toString('base64'));
   fs.writeFileSync('all_xray_verified_meta.json', JSON.stringify(xrayVerified.map(n => ({
     link: sanitizeProxyLink(n.link), proto: n.proto, ip: n.ip, port: n.port, country: n.country,
-    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_xray_verified'
+    tcp_rtt_ms: n.rtt_ms, l7_rtt_ms: n.l7_rtt_ms, verification: 'l7_xray_verified', source: n.source || 'unknown', sources: n.sources || [n.source || 'unknown']
   })), null, 2));
 
   const writeCleanAndB64 = (filename, list) => {
@@ -907,7 +907,15 @@ async function main() {
     sourceStats[taskUrls[i].name].fetched += (perSource[i] || []).length;
   }
   for (const item of rawList) {
-    if (sourceStats[item.source]) sourceStats[item.source].deduped++;
+    const sset = (item.sources && item.sources.length) ? item.sources : [item.source || 'unknown'];
+    const excl = sset.length === 1;
+    for (const s of sset) {
+      if (sourceStats[s]) {
+        sourceStats[s].deduped++;
+        sourceStats[s].sampled = (sourceStats[s].sampled || 0) + 1;
+        if (excl) sourceStats[s].exclusive = (sourceStats[s].exclusive || 0) + 1;
+      }
+    }
   }
   for (const n of alive) {
     if (sourceStats[n.source]) sourceStats[n.source].tcp_alive++;
