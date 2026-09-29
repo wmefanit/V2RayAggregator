@@ -711,7 +711,7 @@
     },
     {
       "name": "davift",
-      "enabled": true,
+      "enabled": false,
       "parser": "line",
       "urls": [
         {
@@ -832,7 +832,8 @@
         {
           "url": "https://ghfast.top/https://raw.githubusercontent.com/free18/v2ray/refs/heads/main/v.txt"
         }
-      ]
+      ],
+      "enabled": false
     },
     {
       "name": "barry-far-base64",
@@ -859,7 +860,8 @@
         {
           "url": "https://cdn.jsdelivr.net/gh/databay-labs/free-proxy-list/socks5.txt"
         }
-      ]
+      ],
+      "enabled": false
     },
     {
       "name": "databay-labs-http",
@@ -868,7 +870,8 @@
         {
           "url": "https://cdn.jsdelivr.net/gh/databay-labs/free-proxy-list/http.txt"
         }
-      ]
+      ],
+      "enabled": false
     },
     {
       "name": "ebrasha-v2ray",
@@ -906,7 +909,8 @@
         {
           "url": "https://sub-cf-250301.pages.dev/auto"
         }
-      ]
+      ],
+      "enabled": false
     }
   ]
 }
