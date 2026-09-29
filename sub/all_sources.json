@@ -911,6 +911,42 @@
         }
       ],
       "enabled": false
+    },
+    {
+      "name": "rtwo2-vless",
+      "parser": "subscription",
+      "pools": [
+        "all"
+      ],
+      "urls": [
+        {
+          "url": "https://raw.githubusercontent.com/rtwo2/FastNodes/main/sub/top.txt"
+        }
+      ]
+    },
+    {
+      "name": "0xradikal-v2ray",
+      "parser": "subscription",
+      "pools": [
+        "all"
+      ],
+      "urls": [
+        {
+          "url": "https://raw.githubusercontent.com/0xRadikal/Free-v2ray-Configs/main/fast/configs.txt"
+        }
+      ]
+    },
+    {
+      "name": "10ium-vless",
+      "parser": "subscription",
+      "pools": [
+        "all"
+      ],
+      "urls": [
+        {
+          "url": "https://raw.githubusercontent.com/10ium/VpnClashFaCollector/main/sub/oneclickvpnkeys/vless.txt"
+        }
+      ]
     }
   ]
 }
