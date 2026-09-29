@@ -197,7 +197,8 @@
           "type": "socks5",
           "url": "https://raw.githubusercontent.com/CelestialBrain/worldpool/main/proxies/socks5.txt"
         }
-      ]
+      ],
+      "enabled": false
     },
     {
       "name": "proxyscrape_api",
@@ -758,7 +759,8 @@
         {
           "url": "https://raw.githubusercontent.com/Delta-Kronecker/V2ray-Config/main/sub.txt"
         }
-      ]
+      ],
+      "enabled": false
     },
     {
       "name": "mfuu-v2ray",
@@ -767,7 +769,8 @@
         {
           "url": "https://raw.githubusercontent.com/mfuu/v2ray/master/v2ray"
         }
-      ]
+      ],
+      "enabled": false
     },
     {
       "name": "MhdiTaheri-mix",
@@ -804,7 +807,8 @@
         {
           "url": "https://sub.nicevpn.top/long"
         }
-      ]
+      ],
+      "enabled": false
     },
     {
       "name": "Epodonios",
